@@ -4,7 +4,6 @@ WORKDIR /app
 COPY --chown=gradle:gradle . /app
 RUN chmod +x ./gradlew
 RUN ./gradlew build -x test
-
 # 2. 실행 스테이지 (Runtime Stage)
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
