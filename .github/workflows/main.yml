@@ -3,7 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - feat/devops/ci-cd
+      - master
 
 jobs:
   build_and_deploy:
