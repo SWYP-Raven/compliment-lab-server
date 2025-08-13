@@ -13,6 +13,7 @@ import swypraven.complimentlabserver.domain.user.entity.User;
 public class Friend {
     @Id
     @Column(name = "id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
