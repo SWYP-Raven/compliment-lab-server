@@ -8,6 +8,7 @@ public class ComplimentLabServerApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(ComplimentLabServerApplication.class, args);
+        System.out.println("커밋");
 	}
 
 }
