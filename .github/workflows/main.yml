@@ -28,7 +28,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: compliment-lab-server:latest
+          tags: compliment-lab-server.kr.ncr.ntruss.com/compliment-lab-server:latest
           platforms: linux/amd64
 
       - name: Deploy to Development Server
