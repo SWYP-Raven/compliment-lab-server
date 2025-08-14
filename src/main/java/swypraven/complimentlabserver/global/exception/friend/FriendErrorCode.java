@@ -10,6 +10,7 @@ import swypraven.complimentlabserver.global.exception.common.ErrorCode;
 public enum FriendErrorCode implements ErrorCode {
 
     EXIST_FRIEND("FRIEND_1", "이미 존재하는 친구입니다.", HttpStatus.BAD_REQUEST),
+    NOT_FOUND_FRIEND("FRIEND_2", "존재하지 않는 친구 입니다.", HttpStatus.NOT_FOUND),
     ;
     private final String code;
     private final String message;
