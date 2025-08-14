@@ -5,7 +5,7 @@ import lombok.Getter;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
 
 @Getter
-public class ResponseCreateFriend {
+public class ResponseFriend {
 
     @JsonProperty("id")
     private Long id;
@@ -19,7 +19,7 @@ public class ResponseCreateFriend {
     @JsonProperty("type_id")
     private Long typeId;
 
-    public ResponseCreateFriend(Friend friend) {
+    public ResponseFriend(Friend friend) {
         this.id = friend.getId();
         this.name = friend.getName();
         this.typeName =  friend.getType().getName();

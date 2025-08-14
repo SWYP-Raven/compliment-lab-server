@@ -5,6 +5,10 @@ import swypraven.complimentlabserver.domain.compliment.entity.TypeCompliment;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
 import swypraven.complimentlabserver.domain.user.entity.User;
 
+import java.util.List;
+
 public interface FriendRepository extends JpaRepository<Friend, Long> {
     Boolean existsByUserAndType(User user, TypeCompliment type);
+
+    List<Friend> findAllByUser(User user);
 }
