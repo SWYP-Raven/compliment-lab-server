@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import swypraven.complimentlabserver.global.exception.common.DomainException;
 import swypraven.complimentlabserver.global.exception.common.ErrorCode;
+import swypraven.complimentlabserver.global.exception.friend.FriendException;
 import swypraven.complimentlabserver.global.exception.user.UserException;
 import swypraven.complimentlabserver.global.response.ApiResponse;
 import swypraven.complimentlabserver.global.response.ErrorResponse;
@@ -23,6 +24,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserException.class)
     public ResponseEntity<?> handleUserException(UserException ex) {
+        log.info("{} : {}", ex.getErrorCode(), ex.getMessage());
+        return ResponseEntity.status(ex.getHttpStatus()).body(ApiResponse.error(ex));
+    }
+
+    @ExceptionHandler(FriendException.class)
+    public ResponseEntity<?> handleFriendException(FriendException ex) {
         log.info("{} : {}", ex.getErrorCode(), ex.getMessage());
         return ResponseEntity.status(ex.getHttpStatus()).body(ApiResponse.error(ex));
     }
