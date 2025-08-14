@@ -1,14 +1,15 @@
 package swypraven.complimentlabserver.domain.friend.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import swypraven.complimentlabserver.domain.compliment.entity.TypeCompliment;
 import swypraven.complimentlabserver.domain.user.entity.User;
 
 @Getter
 @Setter
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "friend", schema = "compliment_lab")
 public class Friend {
     @Id
@@ -26,5 +27,12 @@ public class Friend {
 
     @Column(name = "name")
     private String name;
+
+    @Builder
+    public Friend(User user, TypeCompliment type, String name) {
+        this.user = user;
+        this.type = type;
+        this.name = name;
+    }
 
 }
