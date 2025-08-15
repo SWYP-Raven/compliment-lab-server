@@ -29,4 +29,7 @@ public class DuplicatedCompliment {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "compliment_id", nullable = false)
     private TodayCompliment compliment;
+
+    @Column(name = "is_read", nullable = false)
+    private Boolean isRead;
 }
