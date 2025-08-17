@@ -26,4 +26,15 @@ public class User {
     @Column(name = "email", nullable = false)
     private String email;
 
+    @Column(nullable = false, unique = true, length = 191)
+    private String appleSub; // 애플 고유 사용자 ID
+
+    @Column(nullable = false, length = 50)
+    private String role;
+    public void setAppleSub(String appleSub) {
+    }
+
+    public void setRole(String roleUser) {
+
+    }
 }
