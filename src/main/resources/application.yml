@@ -1,0 +1,12 @@
+# application.yml - 메인 설정 파일
+spring:
+  profiles:
+    active: dev  # 여기서만 프로파일 활성화
+
+# 모든 환경에서 공통으로 사용할 기본 설정
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO

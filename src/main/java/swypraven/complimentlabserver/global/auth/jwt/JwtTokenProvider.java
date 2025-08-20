@@ -5,14 +5,15 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.stereotype.Component;
 import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
 
+import jakarta.annotation.PostConstruct;
 import java.security.Key;
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,19 +24,30 @@ import java.util.stream.Collectors;
 @Component
 public class JwtTokenProvider {
 
-    private final Key key;
-    private final long accessTokenExpiry;
-    private final long refreshTokenExpiry;
+    private Key key;
 
-    public JwtTokenProvider(
-            @Value("${jwt.secret.key}") String secretKey,
-            @Value("${jwt.access-token.expiry:1800}") long accessTokenExpiry,
-            @Value("${jwt.refresh-token.expiry:604800}") long refreshTokenExpiry
-    ) {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
-        this.key = Keys.hmacShaKeyFor(keyBytes);
-        this.accessTokenExpiry = accessTokenExpiry * 1000;
-        this.refreshTokenExpiry = refreshTokenExpiry * 1000;
+    @Value("${jwt.secret.key}")
+    private String secretKey;
+
+    @Value("${jwt.access-token.expiry:1800}")
+    private long accessTokenExpiry;
+
+    @Value("${jwt.refresh-token.expiry:604800}")
+    private long refreshTokenExpiry;
+
+    // Bean 생성 후 키 초기화
+    @PostConstruct
+    public void init() {
+        try {
+            byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+            this.key = Keys.hmacShaKeyFor(keyBytes);
+            // 밀리초 단위로 변환
+            accessTokenExpiry = accessTokenExpiry * 1000;
+            refreshTokenExpiry = refreshTokenExpiry * 1000;
+        } catch (Exception e) {
+            log.error("JWT Secret Key 초기화 실패", e);
+            throw new IllegalStateException("JWT Secret Key가 올바르지 않습니다.");
+        }
     }
 
     // Access + Refresh Token 생성
@@ -70,8 +82,8 @@ public class JwtTokenProvider {
         return builder.compact();
     }
 
-    public UsernamePasswordAuthenticationToken getAuthentication(String accessToken) {
-        Claims claims = parseClaims(accessToken);
+    public UsernamePasswordAuthenticationToken getAuthentication(String token) {
+        Claims claims = parseClaims(token);
 
         Object authClaim = claims.get("auth");
         if (authClaim == null) {
@@ -87,9 +99,13 @@ public class JwtTokenProvider {
         return new UsernamePasswordAuthenticationToken(principal, "", authorities);
     }
 
-    private Claims parseClaims(String accessToken) {
+    private Claims parseClaims(String token) {
         try {
-            return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken).getBody();
+            return Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
         } catch (JwtException | IllegalArgumentException e) {
             throw new LoginFailedException.InvalidJwtTokenException("유효하지 않은 JWT 토큰입니다: " + e.getMessage(), e);
         }

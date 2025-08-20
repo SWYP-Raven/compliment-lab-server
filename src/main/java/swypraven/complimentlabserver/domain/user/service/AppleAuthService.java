@@ -23,8 +23,8 @@ import swypraven.complimentlabserver.global.auth.jwt.JwtToken;
 import swypraven.complimentlabserver.global.auth.jwt.JwtTokenProvider;
 
 import java.net.URL;
+import java.text.ParseException;
 import java.util.List;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -34,14 +34,11 @@ public class AppleAuthService {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
 
-    // Apple 공개키 로드
     public ConfigurableJWTProcessor<SecurityContext> getJwtProcessor() {
         try {
             JWKSet jwkSet = JWKSet.load(new URL(appleAuthUrl));
             JWKSource<SecurityContext> jwkSource = new ImmutableJWKSet<>(jwkSet);
-
-            JWSKeySelector<SecurityContext> keySelector =
-                    new JWSVerificationKeySelector<>(JWSAlgorithm.RS256, jwkSource);
+            JWSKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(JWSAlgorithm.RS256, jwkSource);
 
             ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
             jwtProcessor.setJWSKeySelector(keySelector);
@@ -52,31 +49,24 @@ public class AppleAuthService {
         }
     }
 
-    // Apple 로그인
-    public AppleLoginResponse appleLogin(String idToken) {
-        try {
-            // 1. Apple ID Token 검증
-            JWTClaimsSet claims = appleIdTokenValidator.validate(idToken);
-            String email = claims.getStringClaim("email");
-            String sub = claims.getSubject();
+    public AppleLoginResponse appleLogin(String idToken) throws ParseException {
+        JWTClaimsSet claims = appleIdTokenValidator.validate(idToken);
+        String email = claims.getStringClaim("email");
+        String sub = claims.getSubject();
 
-            // 2. 유저 조회 또는 생성
-            User user = userService.findOrCreateByAppleSub(sub, email);
+        User user = userService.findOrCreateByAppleSub(sub, email);
 
-            // 3. Authentication 객체 생성 후 JWT 발급
-            Authentication auth = new UsernamePasswordAuthenticationToken(
-                    user.getEmail(), null, List.of(new SimpleGrantedAuthority("ROLE_USER"))
-            );
-            JwtToken jwtToken = jwtTokenProvider.generateToken(auth);
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                user.getEmail(), null, List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
 
-            // 4. JwtToken → AppleLoginResponse 변환
-            return AppleLoginResponse.builder()
-                    .grantType(jwtToken.getGrantType())
-                    .accessToken(jwtToken.getAccessToken())
-                    .refreshToken(jwtToken.getRefreshToken())
-                    .build();
-        } catch (Exception e) {
-            throw new LoginFailedException("Apple 로그인 처리 실패: " + e.getMessage());
-        }
+        JwtToken jwtToken = jwtTokenProvider.generateToken(auth);
+
+        return AppleLoginResponse.builder()
+                .grantType(jwtToken.getGrantType())
+                .accessToken(jwtToken.getAccessToken())
+                .refreshToken(jwtToken.getRefreshToken())
+                .build();
     }
 }
+
