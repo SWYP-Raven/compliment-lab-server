@@ -11,7 +11,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
-import swypraven.complimentlabserver.global.auth.exception.LoginFailedException;
+import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
 
 import java.security.Key;
 import java.util.Arrays;

@@ -8,7 +8,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import swypraven.complimentlabserver.domain.user.entity.User;
-import swypraven.complimentlabserver.global.auth.exception.LoginFailedException;
+import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
 import swypraven.complimentlabserver.domain.user.repository.RefreshTokenRepository;
 import swypraven.complimentlabserver.global.auth.jwt.JwtToken;
 import swypraven.complimentlabserver.global.auth.jwt.JwtTokenProvider;

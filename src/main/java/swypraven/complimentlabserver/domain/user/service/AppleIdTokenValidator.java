@@ -6,7 +6,7 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import swypraven.complimentlabserver.global.auth.exception.LoginFailedException;
+import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
 
 @Service
 public class AppleIdTokenValidator {

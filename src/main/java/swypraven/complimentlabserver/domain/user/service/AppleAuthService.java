@@ -17,7 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import swypraven.complimentlabserver.domain.user.entity.User;
-import swypraven.complimentlabserver.global.auth.exception.LoginFailedException;
+import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
 import swypraven.complimentlabserver.domain.user.model.response.AppleLoginResponse;
 import swypraven.complimentlabserver.global.auth.jwt.JwtToken;
 import swypraven.complimentlabserver.global.auth.jwt.JwtTokenProvider;

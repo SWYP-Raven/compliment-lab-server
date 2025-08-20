@@ -1,10 +1,10 @@
-package swypraven.complimentlabserver.global.auth;
+package swypraven.complimentlabserver.global.exception.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import swypraven.complimentlabserver.global.exception.common.ErrorCode;
-import swypraven.complimentlabserver.global.response.ApiResponse;
+
 @Getter
 @AllArgsConstructor
 public enum AuthErrorCode implements ErrorCode {

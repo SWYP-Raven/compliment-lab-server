@@ -1,4 +1,4 @@
-package swypraven.complimentlabserver.global.auth.exception;
+package swypraven.complimentlabserver.global.exception.auth;
 
 public class LoginFailedException extends RuntimeException {
     // Apple 로그인 실패
@@ -26,4 +26,5 @@ public class LoginFailedException extends RuntimeException {
         public AppleIdTokenValidationException() { super("Apple ID Token 검증 실패"); }
         public AppleIdTokenValidationException(String message) { super(message); }
     }
+
 }

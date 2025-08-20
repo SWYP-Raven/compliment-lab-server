@@ -1,4 +1,4 @@
-package swypraven.complimentlabserver.global.auth;
+package swypraven.complimentlabserver.global.exception.auth;
 
 import swypraven.complimentlabserver.global.exception.common.DomainException;
 
