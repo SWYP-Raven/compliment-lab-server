@@ -2,13 +2,19 @@ package swypraven.complimentlabserver.domain.compliment.model.api.naver;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
 
 import java.util.List;
 
 @Getter
 @AllArgsConstructor
 public class RequestNaverClovaChat {
-    private List<Message>  messages;
+
+    public RequestNaverClovaChat() {
+
+    }
+
+    private List<Message> messages;
     private String topP;
     private String topK;
     private int maxTokens;

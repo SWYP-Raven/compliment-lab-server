@@ -5,17 +5,21 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
 import swypraven.complimentlabserver.global.exception.chat.ChatCode;
 import swypraven.complimentlabserver.global.exception.chat.ChatException;
 import swypraven.complimentlabserver.global.exception.friend.FriendErrorCode;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @Entity
 @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "chat", schema = "compliment_lab")
 public class Chat {
 
@@ -48,15 +52,15 @@ public class Chat {
     @JoinColumn(name = "friend_id", nullable = false)
     private Friend friend;
 
-    @Column(name = "message")
+    @Column(name = "message", length = Integer.MAX_VALUE)
     private String message;
 
     @Column(name = "role")
     private RoleType role;
 
     @CreatedDate
-    @Column(name = "created_at")
-    private Instant createdAt;
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 }
 
 enum RoleType {
