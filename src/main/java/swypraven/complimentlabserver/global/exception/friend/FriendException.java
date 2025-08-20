@@ -4,6 +4,6 @@ import swypraven.complimentlabserver.global.exception.common.DomainException;
 
 public class FriendException extends DomainException {
     public FriendException(FriendErrorCode errorCode) {
-        super(errorCode);
+        super(errorCode, message);
     }
 }

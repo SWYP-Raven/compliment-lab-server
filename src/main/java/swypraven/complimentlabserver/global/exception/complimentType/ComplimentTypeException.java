@@ -4,6 +4,6 @@ import swypraven.complimentlabserver.global.exception.common.DomainException;
 
 public class ComplimentTypeException extends DomainException {
     public ComplimentTypeException(ComplimentTypeCode errorCode) {
-        super(errorCode);
+        super(errorCode, message);
     }
 }

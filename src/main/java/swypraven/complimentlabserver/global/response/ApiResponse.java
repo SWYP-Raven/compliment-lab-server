@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import swypraven.complimentlabserver.domain.user.model.response.AppleLoginResponse;
 import swypraven.complimentlabserver.global.exception.common.DomainException;
 
 @Getter
@@ -43,4 +44,23 @@ public class ApiResponse<T> {
                 .message(ex.getMessage())
                 .build();
     }
+
+    public static <T> ApiResponse<T> of(boolean success, String code, String message, T data) {
+        return ApiResponse.<T>builder()
+                .success(success)
+                .code(code)
+                .message(message)
+                .data(data)
+                .build();
+    }
+
+    public static <T> ApiResponse<T> of(boolean success, T data, String message) {
+        return ApiResponse.<T>builder()
+                .success(success)
+                .code(success ? "SUCCESS" : "ERROR")
+                .message(message)
+                .data(data)
+                .build();
+    }
+
 }

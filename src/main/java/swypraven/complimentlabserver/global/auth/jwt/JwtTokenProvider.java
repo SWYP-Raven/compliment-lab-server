@@ -11,6 +11,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
+import swypraven.complimentlabserver.global.auth.exception.LoginFailedException;
 
 import java.security.Key;
 import java.util.Arrays;
@@ -23,15 +24,21 @@ import java.util.stream.Collectors;
 public class JwtTokenProvider {
 
     private final Key key;
+    private final long accessTokenExpiry;
+    private final long refreshTokenExpiry;
 
-    public JwtTokenProvider(@Value("${jwt.secret.key}") String secretKey) {
+    public JwtTokenProvider(
+            @Value("${jwt.secret.key}") String secretKey,
+            @Value("${jwt.access-token.expiry:1800}") long accessTokenExpiry,
+            @Value("${jwt.refresh-token.expiry:604800}") long refreshTokenExpiry
+    ) {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
+        this.accessTokenExpiry = accessTokenExpiry * 1000;
+        this.refreshTokenExpiry = refreshTokenExpiry * 1000;
     }
 
-    /**
-     * Access Token + Refresh Token 생성
-     */
+    // Access + Refresh Token 생성
     public JwtToken generateToken(Authentication authentication) {
         String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -39,21 +46,10 @@ public class JwtTokenProvider {
 
         long now = System.currentTimeMillis();
 
-        // Access Token 유효기간: 30분
-        long accessTokenExpiresIn = now + (1000 * 60 * 30);
-        String accessToken = Jwts.builder()
-                .setSubject(authentication.getName())
-                .claim("auth", authorities)
-                .setExpiration(new Date(accessTokenExpiresIn))
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
+        String accessToken = createToken(authentication.getName(), authorities, now + accessTokenExpiry);
+        String refreshToken = createToken(null, null, now + refreshTokenExpiry);
 
-        // Refresh Token 유효기간: 7일
-        long refreshTokenExpiresIn = now + (1000 * 60 * 60 * 24 * 7);
-        String refreshToken = Jwts.builder()
-                .setExpiration(new Date(refreshTokenExpiresIn))
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
+        log.debug("JWT 토큰 생성 완료: user={}", authentication.getName());
 
         return JwtToken.builder()
                 .grantType("Bearer")
@@ -62,60 +58,63 @@ public class JwtTokenProvider {
                 .build();
     }
 
-    /**
-     * JWT로부터 인증 객체를 가져오는 메서드
-     */
+    private String createToken(String subject, String authorities, long expirationMillis) {
+        JwtBuilder builder = Jwts.builder()
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(expirationMillis))
+                .signWith(key, SignatureAlgorithm.HS256);
+
+        if (subject != null) builder.setSubject(subject);
+        if (authorities != null) builder.claim("auth", authorities);
+
+        return builder.compact();
+    }
+
     public UsernamePasswordAuthenticationToken getAuthentication(String accessToken) {
         Claims claims = parseClaims(accessToken);
 
-        if (claims.get("auth") == null) {
-            throw new RuntimeException("권한 정보가 없는 토큰입니다.");
+        Object authClaim = claims.get("auth");
+        if (authClaim == null) {
+            throw new LoginFailedException.InvalidJwtTokenException("권한 정보가 없는 토큰입니다.");
         }
 
-        Collection<? extends GrantedAuthority> authorities =
-                Arrays.stream(claims.get("auth").toString().split(","))
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
+        Collection<? extends GrantedAuthority> authorities = Arrays.stream(authClaim.toString().split(","))
+                .filter(auth -> !auth.trim().isEmpty())
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
 
         User principal = new User(claims.getSubject(), "", authorities);
-
         return new UsernamePasswordAuthenticationToken(principal, "", authorities);
     }
 
-    /**
-     * 토큰의 Claims 추출
-     */
     private Claims parseClaims(String accessToken) {
         try {
-            return Jwts.parserBuilder()
-                    .setSigningKey(key)
-                    .build()
-                    .parseClaimsJws(accessToken)
-                    .getBody();
-        } catch (ExpiredJwtException e) {
-            return e.getClaims();
+            return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(accessToken).getBody();
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new LoginFailedException.InvalidJwtTokenException("유효하지 않은 JWT 토큰입니다: " + e.getMessage(), e);
         }
     }
 
-    /**
-     * 토큰 유효성 검증
-     */
     public boolean validateToken(String token) {
+        if (token == null || token.trim().isEmpty()) return false;
+
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(key)
-                    .build()
-                    .parseClaimsJws(token);
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             return true;
-        } catch (SecurityException | MalformedJwtException e) {
-            log.info("Invalid JWT Token", e);
-        } catch (ExpiredJwtException e) {
-            log.info("Expired JWT Token", e);
-        } catch (UnsupportedJwtException e) {
-            log.info("Unsupported JWT Token", e);
-        } catch (IllegalArgumentException e) {
-            log.info("JWT claims string is empty.", e);
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new LoginFailedException.InvalidJwtTokenException("유효하지 않은 JWT 토큰입니다: " + e.getMessage(), e);
         }
-        return false;
+    }
+
+    public String getUsernameFromToken(String token) {
+        return parseClaims(token).getSubject();
+    }
+
+    public Date getExpirationDateFromToken(String token) {
+        return parseClaims(token).getExpiration();
+    }
+
+    public boolean isTokenExpired(String token) {
+        return getExpirationDateFromToken(token).before(new Date());
     }
 }

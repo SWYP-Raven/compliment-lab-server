@@ -5,50 +5,76 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import swypraven.complimentlabserver.global.auth.exception.LoginFailedException;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
-/**
- * JWT 인증 필터
- * - HTTP 요청의 Authorization 헤더에서 JWT를 추출하고
- * - 유효하면 SecurityContext에 Authentication 객체를 저장
- */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
-        // 1. Request Header에서 jwt 토큰 추출
-        String token = resolveToken(request);
+    private static final List<String> EXCLUDED_PATHS = Arrays.asList(
+            "/auth/",
+            "/actuator/",
+            "/swagger-ui/",
+            "/v3/api-docs",
+            "/favicon.ico"
+    );
 
-        // 2. validateToken으로 토큰 유효성 검사
-        if(token != null && jwtTokenProvider.validateToken(token)) {
-            Authentication authentication = jwtTokenProvider.getAuthentication(token);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws IOException, ServletException {
+
+        String requestURI = request.getRequestURI();
+
+        try {
+            if (shouldSkipFilter(requestURI)) {
+                log.debug("JWT 검증 제외 경로: {}", requestURI);
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            String token = resolveToken(request);
+
+            if (token != null && jwtTokenProvider.validateToken(token)) {
+                Authentication authentication = jwtTokenProvider.getAuthentication(token);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.debug("JWT 인증 성공: user={}, uri={}", authentication.getName(), requestURI);
+            }
+
+        } catch (LoginFailedException.InvalidJwtTokenException e) {
+            log.warn("JWT 처리 중 예외 발생: {}", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write(e.getMessage());
+            return; // 인증 실패 시 요청 종료
+        } catch (Exception e) {
+            log.error("JWT 필터에서 예상치 못한 예외 발생", e);
         }
+
         filterChain.doFilter(request, response);
     }
 
+    private boolean shouldSkipFilter(String requestURI) {
+        return EXCLUDED_PATHS.stream().anyMatch(requestURI::startsWith);
+    }
 
-    /**
-     * Request Header에서 토큰 정보 추출
-     * @param request HTTP 요청 객체
-     * @return 순수 JWT 토큰 (Bearer 제거)
-     */
     private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
 
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            // "Bearer " (7글자) 이후 부분이 실제 토큰
-            return bearerToken.substring(7);
+            String token = bearerToken.substring(7).trim();
+            return token.isEmpty() ? null : token;
         }
 
         return null;

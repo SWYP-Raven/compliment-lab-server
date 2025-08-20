@@ -9,7 +9,7 @@ import swypraven.complimentlabserver.domain.user.repository.UserRepository;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-
+    //사용자 관리
     private final UserRepository userRepository;
     /**
      * Apple sub(고유 ID) 기준으로 조회하고 없으면 생성

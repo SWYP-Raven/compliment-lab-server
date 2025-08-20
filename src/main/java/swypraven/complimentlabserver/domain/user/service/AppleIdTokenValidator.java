@@ -6,10 +6,11 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import swypraven.complimentlabserver.global.auth.exception.LoginFailedException;
 
 @Service
 public class AppleIdTokenValidator {
-
+    //토큰 검증 전담
     @Value("${apple.client.id}")
     private String appleClientId;
 
@@ -21,22 +22,20 @@ public class AppleIdTokenValidator {
 
     public JWTClaimsSet validate(String idToken) {
         try {
-            // 1. ID 토큰 파싱
             SignedJWT signedJWT = SignedJWT.parse(idToken);
-
-            // 2. 애플 공개키를 이용한 검증
             ConfigurableJWTProcessor<SecurityContext> jwtProcessor = appleAuthService.getJwtProcessor();
             JWTClaimsSet claimsSet = jwtProcessor.process(signedJWT, null);
 
-            // 3. claims 검증 (iss, aud)
             if (!"https://appleid.apple.com".equals(claimsSet.getIssuer())
                     || !claimsSet.getAudience().contains(appleClientId)) {
-                throw new IllegalStateException("ID 토큰 검증 실패");
+                throw new LoginFailedException.AppleIdTokenValidationException("ID 토큰 검증 실패: iss/aud 불일치");
             }
 
             return claimsSet;
+        } catch (LoginFailedException.AppleIdTokenValidationException e) {
+            throw e; // 이미 커스텀 예외
         } catch (Exception e) {
-            throw new RuntimeException("Apple ID Token 검증 실패", e);
+            throw new LoginFailedException.AppleIdTokenValidationException("Apple ID Token 파싱/검증 실패: " + e.getMessage());
         }
     }
 }
