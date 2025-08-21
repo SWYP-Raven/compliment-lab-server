@@ -8,5 +8,5 @@ import java.util.List;
 
 @Service
 public interface ChatApi {
-     String sendMessage(Friend friend, RequestMessage message);
+     String reply(Friend friend, RequestMessage message);
 }

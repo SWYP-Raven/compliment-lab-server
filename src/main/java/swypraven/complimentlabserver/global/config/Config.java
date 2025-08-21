@@ -1,5 +1,6 @@
 package swypraven.complimentlabserver.global.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -11,6 +12,9 @@ import swypraven.complimentlabserver.domain.compliment.model.api.naver.NaverChat
 @Configuration
 public class Config {
 
+    @Value("${naver-clova.token}")
+    private String token;
+
     @Bean
     public ChatApi chatApi(WebClient webClient) {
         return new NaverChatApi(webClient);
@@ -18,11 +22,11 @@ public class Config {
 
     @Bean
     public WebClient webClient(WebClient.Builder builder) {
+        System.out.println(token);
         return builder
-                .baseUrl("https://clovastudio.stream.ntruss.com/v1/chat-completions/HCX-003")
+                .baseUrl("https://clovastudio.stream.ntruss.com/v1/chat-completions/HCX-005")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader("X-NCP-CLOVASTUDIO-REQUEST-ID", "3c1a46d1f14d4e04a99c90ad31639479")
-                .defaultHeader("Authorization", "Bearer nv-6e2ca13e7ece4feea56edadaf7664c44O8Ud")
+                .defaultHeader("Authorization", "Bearer " + token)
                 .build();
     }
 }

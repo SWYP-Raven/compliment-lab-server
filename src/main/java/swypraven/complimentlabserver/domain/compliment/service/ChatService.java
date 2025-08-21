@@ -24,15 +24,19 @@ public class ChatService {
 
     @Transactional
     public ResponseMessage send(Long friendId, RequestMessage requestMessage) {
+        // 이전 대화 내역 불러오기
         Friend friend = friendService.getFriend(friendId);
+        List<Chat> chatHistory = chatRepository.findChatsByFriend(friend);
 
-        String response = reply(friend, requestMessage);
 
+        // AI에게 요청
 
         // 저장
-        Chat chat = new Chat(requestMessage, friend);
-        chatRepository.save(chat);
-        return new ResponseMessage(response);
+//        Chat chat = new Chat(requestMessage, friend);
+//        chatRepository.save(chat);
+//        return new ResponseMessage(response);
+
+        return null;
     }
 
     @Transactional(readOnly = true)
@@ -42,8 +46,7 @@ public class ChatService {
         return null;
     }
 
-    @Transactional
-    public String reply(Friend friend, RequestMessage requestMessage) {
-        return "테스트";
+    private String reply(Friend friend, List<Chat> history, RequestMessage requestMessage) {
+        return chatApi.reply(friend, requestMessage);
     }
 }
