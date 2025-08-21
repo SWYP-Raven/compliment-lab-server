@@ -6,6 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -39,4 +41,15 @@ public class UserService {
         return userRepository.findByEmail(email)
                 .orElseThrow(()->new IllegalStateException("존재하지 않은 유저: "+email));
     }
+
+    @Transactional
+    public Optional<User> findByRefreshToken(String refreshToken) {
+        return userRepository.findByRefreshToken(refreshToken);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<User> findByEmail(String userEmail) {
+        return userRepository.findByEmail(userEmail);
+    }
+
 }

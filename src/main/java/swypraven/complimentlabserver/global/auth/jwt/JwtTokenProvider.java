@@ -35,15 +35,13 @@ public class JwtTokenProvider {
     @Value("${jwt.refresh-token.expiry:604800}")
     private long refreshTokenExpiry;
 
-    // Bean 생성 후 키 초기화
     @PostConstruct
     public void init() {
         try {
             byte[] keyBytes = Decoders.BASE64.decode(secretKey);
             this.key = Keys.hmacShaKeyFor(keyBytes);
-            // 밀리초 단위로 변환
-            accessTokenExpiry = accessTokenExpiry * 1000;
-            refreshTokenExpiry = refreshTokenExpiry * 1000;
+            accessTokenExpiry *= 1000;   // sec -> ms
+            refreshTokenExpiry *= 1000;  // sec -> ms
         } catch (Exception e) {
             log.error("JWT Secret Key 초기화 실패", e);
             throw new IllegalStateException("JWT Secret Key가 올바르지 않습니다.");
@@ -51,35 +49,41 @@ public class JwtTokenProvider {
     }
 
     // Access + Refresh Token 생성
-    public JwtToken generateToken(Authentication authentication) {
+    public JwtToken generateToken(Authentication authentication,
+                                  swypraven.complimentlabserver.domain.user.entity.User user) {
+
         String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
 
         long now = System.currentTimeMillis();
+        String subject = authentication.getName(); // 필요시 appleSub 등 안정 식별자로 교체
 
-        String accessToken = createToken(authentication.getName(), authorities, now + accessTokenExpiry);
-        String refreshToken = createToken(null, null, now + refreshTokenExpiry);
+        // Access 토큰: sub + auth
+        String accessToken = Jwts.builder()
+                .setSubject(subject)
+                .claim("auth", authorities)
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + accessTokenExpiry))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
 
-        log.debug("JWT 토큰 생성 완료: user={}", authentication.getName());
+        // Refresh 토큰: sub + typ=refresh
+        String refreshToken = Jwts.builder()
+                .setSubject(subject)
+                .claim("typ", "refresh")
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + refreshTokenExpiry))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+
+        log.debug("JWT 토큰 생성 완료: user={}", subject);
 
         return JwtToken.builder()
                 .grantType("Bearer")
                 .accessToken(accessToken)
-                .refreshToken(refreshToken)
+                .refreshToken(refreshToken)   // ✅ 여기 fix
                 .build();
-    }
-
-    private String createToken(String subject, String authorities, long expirationMillis) {
-        JwtBuilder builder = Jwts.builder()
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(expirationMillis))
-                .signWith(key, SignatureAlgorithm.HS256);
-
-        if (subject != null) builder.setSubject(subject);
-        if (authorities != null) builder.claim("auth", authorities);
-
-        return builder.compact();
     }
 
     public UsernamePasswordAuthenticationToken getAuthentication(String token) {
@@ -87,6 +91,7 @@ public class JwtTokenProvider {
 
         Object authClaim = claims.get("auth");
         if (authClaim == null) {
+            // Access 토큰이 아니거나 권한 정보가 없는 경우
             throw new LoginFailedException.InvalidJwtTokenException("권한 정보가 없는 토큰입니다.");
         }
 
@@ -113,7 +118,6 @@ public class JwtTokenProvider {
 
     public boolean validateToken(String token) {
         if (token == null || token.trim().isEmpty()) return false;
-
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             return true;
@@ -132,5 +136,10 @@ public class JwtTokenProvider {
 
     public boolean isTokenExpired(String token) {
         return getExpirationDateFromToken(token).before(new Date());
+    }
+
+    // ✅ 미구현 메서드 구현
+    public boolean isRefreshToken(String refreshToken) {
+        return "refresh".equals(parseClaims(refreshToken).get("typ", String.class));
     }
 }

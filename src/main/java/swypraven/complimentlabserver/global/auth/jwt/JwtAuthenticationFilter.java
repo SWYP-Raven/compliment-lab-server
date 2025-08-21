@@ -24,13 +24,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
 
+    // JwtAuthenticationFilter
     private static final List<String> EXCLUDED_PATHS = Arrays.asList(
-            "/auth/",
+            "/api/v1/auth/",   // 추가
             "/actuator/",
             "/swagger-ui/",
             "/v3/api-docs",
             "/favicon.ico"
     );
+
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -55,11 +57,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         } catch (LoginFailedException.InvalidJwtTokenException e) {
             log.warn("JWT 처리 중 예외 발생: {}", e.getMessage());
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write(e.getMessage());
-            return; // 인증 실패 시 요청 종료
-        } catch (Exception e) {
-            log.error("JWT 필터에서 예상치 못한 예외 발생", e);
+            // response.write 대신 예외를 던져서 EntryPoint로 위임
+            throw e;
         }
 
         filterChain.doFilter(request, response);

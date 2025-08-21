@@ -45,19 +45,16 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 // 요청 권한 설정
+                // SecurityConfig
                 .authorizeHttpRequests(auth -> auth
-                        // 인증 불필요 경로
-                        .requestMatchers("/auth/**", "/actuator/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**", "/actuator/**").permitAll()  // 수정
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/favicon.ico").permitAll()
-
-                        // 역할 기반 접근 제어
                         .requestMatchers("/user/test").hasRole("USER")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-
-                        // 나머지 요청은 인증 필요
                         .anyRequest().authenticated()
                 )
+
 
                 // JWT 인증 필터 추가
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
