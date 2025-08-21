@@ -1,10 +1,9 @@
 package swypraven.complimentlabserver.domain.compliment.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import swypraven.complimentlabserver.domain.compliment.model.api.ChatApi;
+import swypraven.complimentlabserver.domain.compliment.api.ChatApi;
 import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
 import swypraven.complimentlabserver.domain.compliment.model.response.ResponseMessage;
 import swypraven.complimentlabserver.domain.friend.entity.Chat;
@@ -30,6 +29,7 @@ public class ChatService {
 
 
         // AI에게 요청
+        chatApi.reply(friend, chatHistory, requestMessage);
 
         // 저장
 //        Chat chat = new Chat(requestMessage, friend);
@@ -44,9 +44,5 @@ public class ChatService {
         Friend friend = friendService.getFriend(friendId);
 //        List<Chat> chats = chatRepository.findAllByFriend(friend);
         return null;
-    }
-
-    private String reply(Friend friend, List<Chat> history, RequestMessage requestMessage) {
-        return chatApi.reply(friend, requestMessage);
     }
 }

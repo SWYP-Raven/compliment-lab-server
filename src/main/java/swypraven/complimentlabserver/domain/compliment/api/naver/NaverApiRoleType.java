@@ -1,4 +1,4 @@
-package swypraven.complimentlabserver.domain.compliment.model.api.naver;
+package swypraven.complimentlabserver.domain.compliment.api.naver;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

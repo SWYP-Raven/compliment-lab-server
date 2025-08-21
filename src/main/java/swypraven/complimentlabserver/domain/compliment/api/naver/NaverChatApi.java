@@ -1,12 +1,17 @@
-package swypraven.complimentlabserver.domain.compliment.model.api.naver;
+package swypraven.complimentlabserver.domain.compliment.api.naver;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
-import swypraven.complimentlabserver.domain.compliment.model.api.ChatApi;
+import swypraven.complimentlabserver.domain.compliment.api.ChatApi;
 import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
+import swypraven.complimentlabserver.domain.friend.entity.Chat;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
+
+import java.util.List;
 
 
 @Slf4j
@@ -31,22 +36,22 @@ public class NaverChatApi implements ChatApi {
     private String result;
 
     @Override
-    public String reply(Friend friend, RequestMessage message) {
+    public String reply(Friend friend, List<Chat> history, RequestMessage message) {
         String id = process;
 
         String prompt = friend.getType().getDescription();
-        String role = "system";
 
-        RequestNaverClovaChat chat = new RequestNaverClovaChat(role, prompt, message);
-
-        log.info("NaverChatApi reply: {}", chat);
+        RequestNaverClovaChat chat = new RequestNaverClovaChat(prompt, history, message);
 
 
-        String response = webClient.post().uri("/")
-                .bodyValue(chat)
+
+        String response = webClient.post()
+                .uri("/")
                 .header("X-NCP-CLOVASTUDIO-REQUEST-ID", id)
+                .bodyValue(chat)
                 .retrieve()
                 .bodyToMono(String.class)
+                .doOnNext(resp -> log.info("Clova API Response: {}", resp))
                 .block();
         return response;
     }

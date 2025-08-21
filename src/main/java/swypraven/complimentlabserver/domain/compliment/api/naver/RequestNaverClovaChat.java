@@ -1,24 +1,20 @@
-package swypraven.complimentlabserver.domain.compliment.model.api.naver;
+package swypraven.complimentlabserver.domain.compliment.api.naver;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
+import swypraven.complimentlabserver.domain.friend.entity.Chat;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-@ToString
 @AllArgsConstructor
 public class RequestNaverClovaChat {
 
-    public RequestNaverClovaChat(String role, String prompt, RequestMessage requestMessage) {
-        List<Message> requestMessages = new ArrayList<>();
-        Message message = new Message(List.of(new Content("text", prompt)), role);
-        requestMessages.add(message);
+    public RequestNaverClovaChat(String prompt, List<Chat> history,  RequestMessage requestMessage) {
 
-        this.messages = requestMessages;
     }
 
     private List<Message> messages;
@@ -32,7 +28,6 @@ public class RequestNaverClovaChat {
 
 
 @Getter
-@ToString
 @AllArgsConstructor
 class Message {
     private List<Content> content;
@@ -40,7 +35,6 @@ class Message {
 }
 
 @Getter
-@ToString
 @AllArgsConstructor
 class Content {
     private String type;
