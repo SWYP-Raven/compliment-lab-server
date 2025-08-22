@@ -10,12 +10,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
+@ToString
 @AllArgsConstructor
 public class RequestNaverClovaChat {
 
     public RequestNaverClovaChat(String prompt, List<Chat> history,  RequestMessage requestMessage) {
+        this.messages = new ArrayList<>();
 
+        // 1. 시스템 프롬프트
+        this.messages.add(new Message(
+                List.of(new Content("text", prompt)),
+                RoleType.SYSTEM.getName()
+        ));
+
+        // 2. 히스토리 추가 (항상 존재)
+        for (Chat chat : history) {
+            this.messages.add(new Message(
+                    List.of(new Content("text", chat.getMessage())),
+                    chat.getRole().getName()
+            ));
+        }
+
+        // 3. 현재 사용자 메시지
+        this.messages.add(new Message(
+                List.of(new Content("text", requestMessage.getMessage())),
+                RoleType.USER.getName()
+        ));
     }
+
 
     private List<Message> messages;
     private double topP = 0.8;
@@ -28,15 +50,17 @@ public class RequestNaverClovaChat {
 
 
 @Getter
+@ToString
 @AllArgsConstructor
 class Message {
-    private List<Content> content;
-    private String role;
+    private final List<Content> content;
+    private final String role;
 }
 
 @Getter
+@ToString
 @AllArgsConstructor
 class Content {
-    private String type;
-    private String text;
+    private final String type;
+    private final String text;
 }

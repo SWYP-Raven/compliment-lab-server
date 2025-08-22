@@ -12,11 +12,10 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
 import java.net.URL;
 
-@Service
+//@Service
 public class AppleIdTokenValidator {
 
     @Value("${apple.client.id}")

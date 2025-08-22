@@ -14,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.stereotype.Service;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.global.auth.jwt.JwtToken;
 import swypraven.complimentlabserver.global.auth.jwt.JwtTokenProvider;
@@ -23,7 +22,7 @@ import java.net.URL;
 import java.text.ParseException;
 import java.util.List;
 
-@Service
+//@Service
 @RequiredArgsConstructor // 의존성 주입을 위한 Lombok 어노테이션
 public class AppleAuthService {
 

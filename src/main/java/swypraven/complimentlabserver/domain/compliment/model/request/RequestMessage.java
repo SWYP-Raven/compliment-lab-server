@@ -7,5 +7,4 @@ import lombok.Getter;
 @AllArgsConstructor
 public class RequestMessage {
     private String message;
-    private String  role;
 }

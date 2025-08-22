@@ -1,11 +1,10 @@
 package swypraven.complimentlabserver.domain.friend.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
 import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
 import swypraven.complimentlabserver.global.exception.chat.ChatCode;
 import swypraven.complimentlabserver.global.exception.chat.ChatException;
@@ -24,23 +23,10 @@ import java.time.LocalDateTime;
 public class Chat {
 
 
-    public Chat(RequestMessage requestMessage, Friend friend) {
+    public Chat(String chat, RoleType role, Friend friend) {
         this.friend = friend;
-        this.message = requestMessage.getMessage();
-
-        switch (requestMessage.getRole()) {
-            case "사용자":
-                this.role = RoleType.USER;
-                break;
-            case "시스템":
-                this.role = RoleType.SYSTEM;
-                break;
-            case "어시스턴트":
-                this.role = RoleType.ASSISTANT;
-                break;
-            default:
-                throw new ChatException(ChatCode.INVALID_ROLE);
-        }
+        this.message = chat;
+        this.role = role;
     }
 
     @Id
@@ -56,6 +42,7 @@ public class Chat {
     private String message;
 
     @Column(name = "role")
+    @Enumerated(EnumType.STRING)
     private RoleType role;
 
     @CreatedDate
@@ -63,8 +50,3 @@ public class Chat {
     private LocalDateTime createdAt;
 }
 
-enum RoleType {
-    USER,
-    SYSTEM,
-    ASSISTANT
-}
