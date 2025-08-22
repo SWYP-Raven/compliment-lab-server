@@ -1,8 +1,9 @@
-package swypraven.complimentlabserver.domain.compliment.api.naver;
+package swypraven.complimentlabserver.domain.compliment.model.dto.naver;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
+import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
 import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
 import swypraven.complimentlabserver.domain.friend.entity.Chat;
 
@@ -46,21 +47,4 @@ public class RequestNaverClovaChat {
     private List<String> stopBefore = new ArrayList<>();
     private int seed = 0;
     private boolean includeAiFilters  = true;
-}
-
-
-@Getter
-@ToString
-@AllArgsConstructor
-class Message {
-    private final List<Content> content;
-    private final String role;
-}
-
-@Getter
-@ToString
-@AllArgsConstructor
-class Content {
-    private final String type;
-    private final String text;
 }
