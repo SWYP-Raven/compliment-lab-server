@@ -21,7 +21,7 @@ jobs:
       - name: 🛠 Create application-test.yml from secret
         run: |
           mkdir -p src/main/resources
-          echo "${{ secrets.APPLICATION_TEST_YML }}" > src/main/resources/application.yml
+          echo "${{ secrets.APPLICATION_TEST_YML }}" > src/main/resources/application-test.yml
 
       - name: 🔨 Build with Gradle
         run: ./gradlew clean build
