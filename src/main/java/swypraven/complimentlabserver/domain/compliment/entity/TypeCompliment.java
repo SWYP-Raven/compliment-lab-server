@@ -17,7 +17,7 @@ public class TypeCompliment {
     @Column(name = "type_name", nullable = false)
     private String name;
 
-    @Column(name = "description")
+    @Lob
     private String description;
 
 }

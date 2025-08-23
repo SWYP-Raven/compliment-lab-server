@@ -29,7 +29,7 @@ public class FriendService {
     private final ComplimentTypeService complimentTypeService;
 
 
-
+    @Transactional
     public ResponseFriend create(RequestCreateFriend request) {
         // TODO: 유저 로직
         User user = userRepository.findById(3L).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
@@ -64,7 +64,14 @@ public class FriendService {
         return new ResponseFriend(friend);
     }
 
+    @Transactional
     public void delete(Long friendId) {
         friendRepository.deleteById(friendId);
     }
+
+    @Transactional(readOnly = true)
+    public Friend getFriend(Long friendId) {
+        return friendRepository.findById(friendId).orElseThrow(() -> new FriendException(FriendErrorCode.NOT_FOUND_FRIEND));
+    }
+
 }
