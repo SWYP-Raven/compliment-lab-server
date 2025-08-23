@@ -26,7 +26,7 @@ public class Config {
     @Bean
     public WebClient webClient(WebClient.Builder builder) {
         return builder
-                .baseUrl("https://clovastudio.stream.ntruss.com/v3/chat-completions/HCX-005")
+                .baseUrl("https://clovastudio.stream.ntruss.com/v3/chat-completions")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader("X-NCP-CLOVASTUDIO-REQUEST-ID", id)
                 .defaultHeader("Authorization", "Bearer " + token)

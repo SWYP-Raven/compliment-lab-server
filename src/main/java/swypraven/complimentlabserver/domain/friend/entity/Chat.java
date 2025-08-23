@@ -5,13 +5,6 @@ import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
-import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
-import swypraven.complimentlabserver.global.exception.chat.ChatCode;
-import swypraven.complimentlabserver.global.exception.chat.ChatException;
-import swypraven.complimentlabserver.global.exception.friend.FriendErrorCode;
-
-import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -42,7 +35,6 @@ public class Chat {
     private String message;
 
     @Column(name = "role")
-    @Enumerated(EnumType.STRING)
     private RoleType role;
 
     @CreatedDate

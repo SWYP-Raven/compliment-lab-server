@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import swypraven.complimentlabserver.domain.compliment.api.ChatApi;
+import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
+import swypraven.complimentlabserver.domain.compliment.model.dto.naver.response.ResponseNavarClovaChat;
 import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
 import swypraven.complimentlabserver.domain.compliment.model.response.ResponseMessage;
 import swypraven.complimentlabserver.domain.friend.entity.Chat;
@@ -29,14 +31,15 @@ public class ChatService {
 
 
         // AI에게 요청
-        chatApi.reply(friend, chatHistory, requestMessage);
-
+        ResponseNavarClovaChat chatResponse = chatApi.reply(friend, chatHistory, requestMessage);
         // 저장
-//        Chat chat = new Chat(requestMessage, friend);
-//        chatRepository.save(chat);
-//        return new ResponseMessage(response);
+        Chat chat = new Chat(requestMessage.getMessage(), RoleType.USER, friend);
+        Chat responseChat = new Chat(chatResponse.getMessage(), RoleType.ASSISTANT, friend);
 
-        return null;
+        chatRepository.save(chat);
+        chatRepository.save(responseChat);
+
+        return new ResponseMessage(chatResponse.getMessage());
     }
 
     @Transactional(readOnly = true)
