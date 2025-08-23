@@ -1,66 +1,58 @@
 package swypraven.complimentlabserver.domain.user.service;
 
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.proc.JWSKeySelector;
-import com.nimbusds.jose.proc.JWSVerificationKeySelector;
-import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
-import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.stereotype.Service;
 import swypraven.complimentlabserver.domain.user.entity.User;
+import swypraven.complimentlabserver.domain.user.model.response.AppleLoginResponse;
 import swypraven.complimentlabserver.global.auth.jwt.JwtToken;
 import swypraven.complimentlabserver.global.auth.jwt.JwtTokenProvider;
 
-import java.net.URL;
 import java.text.ParseException;
 import java.util.List;
 
-//@Service
-@RequiredArgsConstructor // 의존성 주입을 위한 Lombok 어노테이션
+@Slf4j
+@Service
+@RequiredArgsConstructor
 public class AppleAuthService {
 
-    private final String appleAuthUrl = "https://appleid.apple.com/auth/keys";
-    private final AppleIdTokenValidator appleIdTokenValidator; // 의존성 주입
-    private final UserService userService; // 의존성 주입
-    private final JwtTokenProvider jwtTokenProvider; // 의존성 주입
+    private final AppleIdTokenValidator appleIdTokenValidator; // 서명/클레임 검증(런타임 예외로 래핑)
+    private final UserService userService;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    public ConfigurableJWTProcessor<SecurityContext> getJwtProcessor() {
-        try {
-            JWKSet jwkSet = JWKSet.load(new URL(appleAuthUrl));
-            JWKSource<SecurityContext> jwkSource = new ImmutableJWKSet<>(jwkSet);
-
-            JWSKeySelector<SecurityContext> keySelector =
-                    new JWSVerificationKeySelector<>(JWSAlgorithm.RS256, jwkSource);
-
-            ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
-            jwtProcessor.setJWSKeySelector(keySelector);
-
-            return jwtProcessor;
-        } catch (Exception e) {
-            throw new RuntimeException("Apple 공개키 로드 실패", e);
-        }
-    }
-
-    public JwtToken appleLogin(String idToken) throws ParseException {
-        // 1. Apple ID Token 유효성 검증
+    /**
+     * 애플 로그인 플로우:
+     * 1) idToken 검증(서명 + iss/aud 등)
+     * 2) 사용자 조회/생성
+     * 3) Access/Refresh 발급
+     * (체크 예외는 모두 validator 내부에서 런타임으로 래핑됨)
+     */
+    public AppleLoginResponse appleLogin(String idToken) throws ParseException {
+        // 1) 토큰 검증 (유효하지 않으면 LoginFailedException.* 런타임 예외 발생)
         JWTClaimsSet claims = appleIdTokenValidator.validate(idToken);
-        String email = claims.getStringClaim("email");
-        String sub = claims.getSubject();
 
-        // 2. 유저 생성 또는 조회
+        // 2) 사용자 조회/생성 (애플은 최초 로그인 때만 email 제공될 수 있음)
+        String email = claims.getStringClaim("email"); // null 가능
+        String sub = claims.getSubject();              // 애플 고유 사용자 ID(고정)
         User user = userService.findOrCreateByAppleSub(sub, email);
 
-        // 3. Authentication 객체 생성 후 JWT 발급
-        Authentication auth = new UsernamePasswordAuthenticationToken(
-                user.getEmail(), null, List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        // 3) JWT 발급
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                user.getAppleSub(), // 또는 userId
+                null,
+                List.of(new SimpleGrantedAuthority(user.getRole())) // ROLE_USER
         );
-        return jwtTokenProvider.generateToken(auth);
+        JwtToken jwtToken = jwtTokenProvider.generateToken(authentication, user); // user 넘겨서 email/role 클레임 포함
+
+
+        return AppleLoginResponse.builder()
+                .grantType(jwtToken.grantType())   // 보통 "Bearer"
+                .accessToken(jwtToken.accessToken())
+                .refreshToken(jwtToken.refreshToken())
+                .build();
     }
 }

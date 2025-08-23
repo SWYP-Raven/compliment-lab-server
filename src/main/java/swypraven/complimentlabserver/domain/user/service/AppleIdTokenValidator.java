@@ -1,9 +1,10 @@
 package swypraven.complimentlabserver.domain.user.service;
 
+import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.jwk.source.RemoteJWKSet;
+import com.nimbusds.jose.proc.BadJOSEException;
 import com.nimbusds.jose.proc.JWSKeySelector;
 import com.nimbusds.jose.proc.JWSVerificationKeySelector;
 import com.nimbusds.jose.proc.SecurityContext;
@@ -12,58 +13,60 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
 
 import java.net.URL;
+import java.util.Date;
 
-//@Service
+import static org.springframework.security.oauth2.jwt.JwtClaimNames.ISS;
+
+@Service
 public class AppleIdTokenValidator {
 
-    @Value("${apple.client.id}")
+    private static final String JWK_URL =  ISS + "/auth/keys";
+    @Value("${apple.client-id}")
     private String appleClientId;
-
-    private final String appleAuthUrl = "https://appleid.apple.com/auth/keys";
-
-//    private final AppleAuthService appleAuthService;
-//
-//    public AppleIdTokenValidator(AppleAuthService appleAuthService) {
-//        this.appleAuthService = appleAuthService;
-//    }
 
     public JWTClaimsSet validate(String idToken) {
         try {
-            // 1. ID 토큰 파싱
-            SignedJWT signedJWT = SignedJWT.parse(idToken);
+            SignedJWT signed = SignedJWT.parse(idToken);
 
-            // 2. 애플 공개키를 이용한 검증
-            ConfigurableJWTProcessor<SecurityContext> jwtProcessor = getJwtProcessor();
-//            ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor();
-            JWTClaimsSet claimsSet = jwtProcessor.process(signedJWT, null);
+            // 1) 서명 검증
+            var jwtProcessor = createJwtProcessor();
+            JWTClaimsSet claims = jwtProcessor.process(signed, null);
 
-            // 3. claims 검증 (iss, aud)
-            if (!"https://appleid.apple.com".equals(claimsSet.getIssuer())
-                    || !claimsSet.getAudience().contains(appleClientId)) {
-                throw new IllegalStateException("ID 토큰 검증 실패");
+            // 2) 표준 클레임 검증
+            if (!ISS.equals(claims.getIssuer())) {
+                throw new LoginFailedException.AppleIdTokenValidationException("iss 불일치");
+            }
+            if (!claims.getAudience().contains(appleClientId)) {
+                throw new LoginFailedException.AppleIdTokenValidationException("aud 불일치");
+            }
+            // (선택) 만료/발급시각/nonce 등 추가검증
+            Date exp = claims.getExpirationTime();
+            if (exp == null || exp.before(new Date())) {
+                throw new LoginFailedException.AppleIdTokenValidationException("토큰 만료");
             }
 
-            return claimsSet;
+            return claims;
+
+        } catch (LoginFailedException.AppleIdTokenValidationException e) {
+            throw e;
         } catch (Exception e) {
-            throw new RuntimeException("Apple ID Token 검증 실패", e);
+            throw new LoginFailedException.AppleIdTokenValidationException("Apple ID Token 파싱/검증 실패: " + e.getMessage(), e);
         }
     }
-    private ConfigurableJWTProcessor<SecurityContext> getJwtProcessor() {
-        try {
-            JWKSet jwkSet = JWKSet.load(new URL(appleAuthUrl));
-            JWKSource<SecurityContext> jwkSource = new ImmutableJWKSet<>(jwkSet);
 
-            JWSKeySelector<SecurityContext> keySelector =
-                    new JWSVerificationKeySelector<>(JWSAlgorithm.RS256, jwkSource);
-
-            ConfigurableJWTProcessor<SecurityContext> jwtProcessor = new DefaultJWTProcessor<>();
-            jwtProcessor.setJWSKeySelector(keySelector);
-
-            return jwtProcessor;
-        } catch (Exception e) {
-            throw new RuntimeException("Apple 공개키 로드 실패", e);
-        }
+    // ⬇️ RS256 서명 검증용 JWKS 셋업 (캐싱 포함)
+    ConfigurableJWTProcessor<SecurityContext> createJwtProcessor() throws Exception {
+        var jwkSource = new com.nimbusds.jose.jwk.source.RemoteJWKSet<SecurityContext>(new URL(JWK_URL));
+        var selector  = new com.nimbusds.jose.proc.JWSVerificationKeySelector<SecurityContext>(
+                com.nimbusds.jose.JWSAlgorithm.RS256, jwkSource);
+        var p = new com.nimbusds.jwt.proc.DefaultJWTProcessor<SecurityContext>();
+        p.setJWSKeySelector(selector);
+        // (선택) clock skew 허용
+        p.setJWTClaimsSetVerifier((claims, context) -> { /* no-op, 수동검증은 위에서 */ });
+        return p;
     }
 }
