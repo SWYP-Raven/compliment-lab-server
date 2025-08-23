@@ -1,15 +1,18 @@
 package swypraven.complimentlabserver.global.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import swypraven.complimentlabserver.domain.user.model.response.AppleLoginResponse;
 import swypraven.complimentlabserver.global.exception.common.DomainException;
 
 @Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
     private boolean success;
     private String code;
@@ -41,4 +44,23 @@ public class ApiResponse<T> {
                 .message(ex.getMessage())
                 .build();
     }
+
+    public static <T> ApiResponse<T> of(boolean success, String code, String message, T data) {
+        return ApiResponse.<T>builder()
+                .success(success)
+                .code(code)
+                .message(message)
+                .data(data)
+                .build();
+    }
+
+    public static <T> ApiResponse<T> of(boolean success, T data, String message) {
+        return ApiResponse.<T>builder()
+                .success(success)
+                .code(success ? "SUCCESS" : "ERROR")
+                .message(message)
+                .data(data)
+                .build();
+    }
+
 }
