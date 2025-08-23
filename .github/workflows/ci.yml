@@ -24,7 +24,7 @@ jobs:
           echo "${{ secrets.APPLICATION_TEST_YML }}" > src/main/resources/application-test.yml
 
       - name: 🔨 Build with Gradle
-        run: ./gradlew clean build
+        # run: ./gradlew clean build
 
       - name: ✅ Run Tests
         run: ./gradlew test -Dspring.profiles.active=test
