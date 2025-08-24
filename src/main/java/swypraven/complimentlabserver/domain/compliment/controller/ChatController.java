@@ -1,6 +1,16 @@
 package swypraven.complimentlabserver.domain.compliment.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import swypraven.complimentlabserver.domain.compliment.model.dto.ChatResponseSlice;
+import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
+import swypraven.complimentlabserver.domain.compliment.model.response.ResponseMessage;
+import swypraven.complimentlabserver.domain.compliment.service.ChatService;
+import swypraven.complimentlabserver.global.response.ApiResponse;
+
+import java.time.LocalDateTime;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
@@ -26,9 +36,27 @@ public class ChatController {
     }
 
     @GetMapping("/{friendId}")
-    public ResponseEntity<?> sendMessage(@PathVariable Long friendId) {
-        List<Chat> chats = chatService.findAllByFriend(friendId);
-        return ResponseEntity.status(200).body(chats);
+    public ResponseEntity<ApiResponse<ChatResponseSlice>> getMessages(
+            @PathVariable Long friendId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastCreatedAt,
+            @RequestParam(defaultValue = "20") int size)
+    {
+        ChatResponseSlice response = chatService.findAllByFriend(friendId, lastCreatedAt, size);
+        return ResponseEntity.ok(ApiResponse.success(response, "200", "조회 성공"));
     }
 
+    @PostMapping("/save/{messageId}")
+    public ResponseEntity<?> saveMessage(@PathVariable("messageId") Long messageId) {
+        chatService.saveMessage(messageId);
+        return ResponseEntity.ok(ApiResponse.success("200", "저장 성공"));
+    }
+
+    @GetMapping("/save")
+    public ResponseEntity<?> getSavedMessages(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastCreatedAt,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        ChatResponseSlice response = chatService.findAllSavedChat(size, lastCreatedAt);
+        return ResponseEntity.ok(ApiResponse.success(response, "200", "조회 성공"));
+    }
 }

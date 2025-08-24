@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import swypraven.complimentlabserver.domain.compliment.entity.TypeCompliment;
+import swypraven.complimentlabserver.domain.compliment.model.dto.ChatResponse;
+import swypraven.complimentlabserver.domain.compliment.service.ChatService;
 import swypraven.complimentlabserver.domain.compliment.service.ComplimentTypeService;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
 import swypraven.complimentlabserver.domain.friend.model.request.RequestCreateFriend;
@@ -28,11 +30,10 @@ public class FriendService {
     private final FriendRepository friendRepository;
     private final ComplimentTypeService complimentTypeService;
 
-
     @Transactional
     public ResponseFriend create(RequestCreateFriend request) {
         // TODO: 유저 로직
-        User user = userRepository.findById(3L).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        User user = userRepository.findById(1L).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
         TypeCompliment type = complimentTypeService.getType(request.getFriendType());
 
@@ -49,9 +50,13 @@ public class FriendService {
 
     @Transactional(readOnly = true)
     public List<ResponseFriend> getFriends() {
-        User user = userRepository.findById(3L).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        User user = userRepository.findById(1L).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
         List<Friend> friends = friendRepository.findAllByUser(user);
-        return friends.stream().map(ResponseFriend::new).toList();
+
+        return friends.stream().map(friend -> {
+            ChatResponse lastChat = chatService.findLastChats(friend);
+            return new ResponseFriend(friend, lastChat.getMessage());
+        }).toList();
     }
 
 

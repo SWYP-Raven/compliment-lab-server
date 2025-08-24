@@ -24,7 +24,7 @@ import static org.springframework.security.oauth2.jwt.JwtClaimNames.ISS;
 @Service
 public class AppleIdTokenValidator {
 
-    private static final String JWK_URL =  ISS + "/auth/keys";
+    private static final String JWK_URL =  ISS + "/auth/keys";;
     @Value("${apple.client-id}")
     private String appleClientId;
 
@@ -69,4 +69,3 @@ public class AppleIdTokenValidator {
         p.setJWTClaimsSetVerifier((claims, context) -> { /* no-op, 수동검증은 위에서 */ });
         return p;
     }
-}
