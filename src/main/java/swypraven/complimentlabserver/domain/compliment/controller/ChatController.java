@@ -28,7 +28,7 @@ public class ChatController {
     }
 
     @GetMapping("/{friendId}")
-    public ResponseEntity<?> getMessages(
+    public ResponseEntity<ApiResponse<ChatResponseSlice>> getMessages(
             @PathVariable Long friendId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastCreatedAt,
             @RequestParam(defaultValue = "20") int size)
@@ -37,5 +37,18 @@ public class ChatController {
         return ResponseEntity.ok(ApiResponse.success(response, "200", "조회 성공"));
     }
 
+    @PostMapping("/save/{messageId}")
+    public ResponseEntity<?> saveMessage(@PathVariable("messageId") Long messageId) {
+        chatService.saveMessage(messageId);
+        return ResponseEntity.ok(ApiResponse.success("200", "저장 성공"));
+    }
 
+    @GetMapping("/save")
+    public ResponseEntity<?> getSavedMessages(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastCreatedAt,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        ChatResponseSlice response = chatService.findAllSavedChat(size, lastCreatedAt);
+        return ResponseEntity.ok(ApiResponse.success(response, "200", "조회 성공"));
+    }
 }

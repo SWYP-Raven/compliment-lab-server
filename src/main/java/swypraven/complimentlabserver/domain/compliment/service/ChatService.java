@@ -9,15 +9,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import swypraven.complimentlabserver.domain.compliment.api.ChatApi;
 import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
+import swypraven.complimentlabserver.domain.compliment.entity.ChatCompliment;
 import swypraven.complimentlabserver.domain.compliment.model.dto.ChatResponse;
 import swypraven.complimentlabserver.domain.compliment.model.dto.ChatResponseSlice;
 import swypraven.complimentlabserver.domain.compliment.model.dto.naver.response.ResponseNavarClovaChat;
 import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
 import swypraven.complimentlabserver.domain.compliment.model.response.ResponseMessage;
+import swypraven.complimentlabserver.domain.compliment.repository.ChatComplimentRepository;
 import swypraven.complimentlabserver.domain.friend.entity.Chat;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
 import swypraven.complimentlabserver.domain.friend.repository.ChatRepository;
 import swypraven.complimentlabserver.domain.friend.service.FriendService;
+import swypraven.complimentlabserver.domain.user.entity.User;
+import swypraven.complimentlabserver.domain.user.repository.UserRepository;
+import swypraven.complimentlabserver.global.exception.chat.ChatErrorCode;
+import swypraven.complimentlabserver.global.exception.chat.ChatException;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -30,6 +36,9 @@ public class ChatService {
     private final ChatApi chatApi;
     private final FriendService friendService;
     private final ChatRepository chatRepository;
+    private final ChatComplimentRepository chatComplimentRepository;
+    private final UserRepository userRepository;
+
 
     @Transactional
     public ResponseMessage send(Long friendId, RequestMessage requestMessage) {
@@ -69,4 +78,32 @@ public class ChatService {
         return ChatResponseSlice.of(chatResponses, chats.hasNext());
     }
 
+
+    @Transactional
+    public void saveMessage(Long messageId) {
+        // TODO: 유저 정보 가져오기
+        User user = userRepository.findById(1L).get();
+
+        Chat chat = chatRepository.findById(messageId).orElseThrow(() -> new ChatException(ChatErrorCode.NOT_FOUND));
+
+        if(chat.getRole() == RoleType.USER) {
+            throw new ChatException(ChatErrorCode.INVALID_SAVE_ROLE_TYPE);
+        }
+
+        chatComplimentRepository.save(new ChatCompliment(user, chat));
+    }
+
+    @Transactional(readOnly = true)
+    public ChatResponseSlice findAllSavedChat(int size, LocalDateTime lastCreatedAt) {
+        // TODO: 유저 정보 가져오기
+        User user = userRepository.findById(1L).get();
+
+        Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Slice<ChatCompliment> chats = chatComplimentRepository.findNextChats(user, lastCreatedAt, pageable);
+
+        List<ChatResponse> chatResponses = chats.getContent().stream()
+                .map(ChatResponse::new)
+                .toList();
+        return ChatResponseSlice.of(chatResponses, chats.hasNext());
+    }
 }
