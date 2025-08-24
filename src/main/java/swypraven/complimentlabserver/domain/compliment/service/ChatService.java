@@ -19,11 +19,13 @@ import swypraven.complimentlabserver.domain.compliment.repository.ChatCompliment
 import swypraven.complimentlabserver.domain.friend.entity.Chat;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
 import swypraven.complimentlabserver.domain.friend.repository.ChatRepository;
-import swypraven.complimentlabserver.domain.friend.service.FriendService;
+import swypraven.complimentlabserver.domain.friend.repository.FriendRepository;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
 import swypraven.complimentlabserver.global.exception.chat.ChatErrorCode;
 import swypraven.complimentlabserver.global.exception.chat.ChatException;
+import swypraven.complimentlabserver.global.exception.friend.FriendErrorCode;
+import swypraven.complimentlabserver.global.exception.friend.FriendException;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -34,16 +36,17 @@ import java.util.List;
 public class ChatService {
 
     private final ChatApi chatApi;
-    private final FriendService friendService;
     private final ChatRepository chatRepository;
     private final ChatComplimentRepository chatComplimentRepository;
     private final UserRepository userRepository;
+    private final FriendRepository friendRepository;
 
 
     @Transactional
     public ResponseMessage send(Long friendId, RequestMessage requestMessage) {
         // 친구 정보
-        Friend friend = friendService.getFriend(friendId);
+        Friend friend = friendRepository.findById(friendId)
+                .orElseThrow(() -> new FriendException(FriendErrorCode.NOT_FOUND_FRIEND));
 
         // 최근 20개 가져오기
         Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -67,7 +70,9 @@ public class ChatService {
 
     @Transactional(readOnly = true)
     public ChatResponseSlice findAllByFriend(Long friendId, LocalDateTime lastCreatedAt, int size) {
-        Friend friend = friendService.getFriend(friendId);
+        Friend friend = friendRepository.findById(friendId)
+                .orElseThrow(() -> new FriendException(FriendErrorCode.NOT_FOUND_FRIEND));
+
         Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Slice<Chat> chats = chatRepository.findNextChats(friend, lastCreatedAt, pageable);
 
@@ -105,5 +110,11 @@ public class ChatService {
                 .map(ChatResponse::new)
                 .toList();
         return ChatResponseSlice.of(chatResponses, chats.hasNext());
+    }
+
+    @Transactional(readOnly = true)
+    public ChatResponse findLastChats(Friend friend) {
+        Chat chat = chatRepository.findFirstByFriendOrderByCreatedAtDesc(friend).orElseThrow(() -> new ChatException(ChatErrorCode.NOT_FOUND));
+        return new ChatResponse(chat);
     }
 }

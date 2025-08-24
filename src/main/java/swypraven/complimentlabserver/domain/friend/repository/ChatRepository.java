@@ -11,6 +11,7 @@ import swypraven.complimentlabserver.domain.friend.entity.Friend;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface ChatRepository extends JpaRepository<Chat, Long> {
 
@@ -26,4 +27,7 @@ public interface ChatRepository extends JpaRepository<Chat, Long> {
             "WHERE c.friend = :friend " +
             "ORDER BY c.createdAt DESC")
     List<Chat> findLastChats(@Param("friend") Friend friend, Pageable pageable);
+
+
+    Optional<Chat> findFirstByFriendOrderByCreatedAtDesc(Friend friend);
 }
