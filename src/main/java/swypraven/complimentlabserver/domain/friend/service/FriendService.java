@@ -15,6 +15,7 @@ import swypraven.complimentlabserver.domain.friend.model.response.ResponseFriend
 import swypraven.complimentlabserver.domain.friend.repository.FriendRepository;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
+import swypraven.complimentlabserver.domain.user.service.UserService;
 import swypraven.complimentlabserver.global.exception.friend.FriendErrorCode;
 import swypraven.complimentlabserver.global.exception.friend.FriendException;
 import swypraven.complimentlabserver.global.exception.user.UserErrorCode;
@@ -29,6 +30,7 @@ public class FriendService {
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
     private final ComplimentTypeService complimentTypeService;
+    private final ChatService chatService;
 
     @Transactional
     public ResponseFriend create(RequestCreateFriend request) {

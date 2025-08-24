@@ -1,17 +1,9 @@
 package swypraven.complimentlabserver.domain.user.service;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.jwk.source.RemoteJWKSet;
-import com.nimbusds.jose.proc.BadJOSEException;
-import com.nimbusds.jose.proc.JWSKeySelector;
-import com.nimbusds.jose.proc.JWSVerificationKeySelector;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
-import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
@@ -24,7 +16,8 @@ import static org.springframework.security.oauth2.jwt.JwtClaimNames.ISS;
 @Service
 public class AppleIdTokenValidator {
 
-    private static final String JWK_URL =  ISS + "/auth/keys";;
+    private static final String JWK_URL = ISS + "/auth/keys";
+    ;
     @Value("${apple.client-id}")
     private String appleClientId;
 
@@ -61,7 +54,7 @@ public class AppleIdTokenValidator {
     // ⬇️ RS256 서명 검증용 JWKS 셋업 (캐싱 포함)
     ConfigurableJWTProcessor<SecurityContext> createJwtProcessor() throws Exception {
         var jwkSource = new com.nimbusds.jose.jwk.source.RemoteJWKSet<SecurityContext>(new URL(JWK_URL));
-        var selector  = new com.nimbusds.jose.proc.JWSVerificationKeySelector<SecurityContext>(
+        var selector = new com.nimbusds.jose.proc.JWSVerificationKeySelector<SecurityContext>(
                 com.nimbusds.jose.JWSAlgorithm.RS256, jwkSource);
         var p = new com.nimbusds.jwt.proc.DefaultJWTProcessor<SecurityContext>();
         p.setJWSKeySelector(selector);
@@ -69,3 +62,4 @@ public class AppleIdTokenValidator {
         p.setJWTClaimsSetVerifier((claims, context) -> { /* no-op, 수동검증은 위에서 */ });
         return p;
     }
+}
