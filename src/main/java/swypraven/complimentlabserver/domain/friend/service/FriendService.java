@@ -29,6 +29,7 @@ public class FriendService {
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
     private final ComplimentTypeService complimentTypeService;
+    private final ChatService chatService;
 
     @Transactional
     public ResponseFriend create(RequestCreateFriend request) {
