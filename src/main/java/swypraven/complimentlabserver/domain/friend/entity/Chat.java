@@ -14,8 +14,7 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "chat", schema = "compliment_lab")
 public class Chat {
-
-
+  
     public Chat(String chat, RoleType role, Friend friend) {
         this.friend = friend;
         this.message = chat;
