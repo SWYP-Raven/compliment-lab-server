@@ -69,4 +69,3 @@ public class AppleIdTokenValidator {
         p.setJWTClaimsSetVerifier((claims, context) -> { /* no-op, 수동검증은 위에서 */ });
         return p;
     }
-}

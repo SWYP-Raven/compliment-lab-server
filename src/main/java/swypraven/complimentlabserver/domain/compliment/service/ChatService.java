@@ -29,6 +29,13 @@ import swypraven.complimentlabserver.global.exception.friend.FriendException;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import swypraven.complimentlabserver.domain.compliment.model.dto.naver.response.ResponseNavarClovaChat;
+import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
+import swypraven.complimentlabserver.domain.compliment.model.response.ResponseMessage;
+import swypraven.complimentlabserver.domain.friend.entity.Chat;
+import swypraven.complimentlabserver.domain.friend.entity.Friend;
+import swypraven.complimentlabserver.domain.friend.repository.ChatRepository;
+import swypraven.complimentlabserver.domain.friend.service.FriendService;
 import java.util.List;
 
 @Service

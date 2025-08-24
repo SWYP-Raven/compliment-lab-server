@@ -29,7 +29,6 @@ public class ResponseFriend {
         this.typeId = friend.getType().getId();
     }
 
-
     public ResponseFriend(Friend friend, String lastMessage) {
         this.id = friend.getId();
         this.name = friend.getName();
@@ -37,5 +36,4 @@ public class ResponseFriend {
         this.typeId = friend.getType().getId();
         this.lastMessage = lastMessage;
     }
-
 }
