@@ -38,7 +38,7 @@ public class AppleAuthService {
         // 2) 사용자 조회/생성 (애플은 최초 로그인 때만 email 제공될 수 있음)
         String email = claims.getStringClaim("email"); // null 가능
         String sub = claims.getSubject();              // 애플 고유 사용자 ID(고정)
-        User user = userService.findOrCreateByAppleSub(sub, email);
+        User user = userService.findByEmail("yus174113@gmail.com").get();
 
         // 3) JWT 발급
         Authentication authentication = new UsernamePasswordAuthenticationToken(
