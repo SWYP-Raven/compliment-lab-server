@@ -1,5 +1,5 @@
 # 1. 빌드 스테이지 (Build Stage)
-FROM gradle:8.4.0-jdk17-alpine AS builder
+FROM gradle:8.4.0-jdk17 AS builder
 WORKDIR /app
 COPY --chown=gradle:gradle . /app
 RUN chmod +x ./gradlew
