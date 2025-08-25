@@ -9,12 +9,33 @@ jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
+      # 1. 코드 체크아웃
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 2. application-prod.yml 생성
+      - name: Create application-prod.yml
+        run: |
+          echo "${{ secrets.APPLICATION_PROD }}" > src/main/resources/application-prod.yml
+
+      # 3. JDK 17 설정
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # 4. Gradle 빌드
+      - name: Grant Gradle permissions
+        run: chmod +x ./gradlew
+      - name: Build with Gradle
+        run: ./gradlew build -x test
+
+      # 5. Docker Buildx 설정
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # 6. Docker 레지스트리 로그인
       - name: Log in to Docker Registry
         uses: docker/login-action@v3
         with:
@@ -22,15 +43,17 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # 7. Docker 이미지 빌드 및 푸시
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
           push: true
-          tags: compliment-lab-server.kr.ncr.ntruss.com/compliment-lab-server
+          tags: compliment-lab-server.kr.ncr.ntruss.com/compliment-lab-server:latest
           platforms: linux/amd64
 
+      # 8. 서버 배포
       - name: Deploy to Development Server
         uses: appleboy/ssh-action@master
         with:
@@ -38,6 +61,15 @@ jobs:
           username: ${{ secrets.DEV_SERVER_USERNAME }}
           key: ${{ secrets.DEV_SERVER_SSH_KEY }}
           script: |
-            docker pull compliment-lab-server.kr.ncr.ntruss.com/compliment-lab-server
-            docker-compose up -d --force-recreate
+            cd /home/ubuntu/project
+            # 환경변수 설정
+            echo "DB_USER=${{ secrets.DB_USER }}" > .env
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+            echo "MYSQL_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}" >> .env
+            echo "SPRING_PROFILES_ACTIVE=prod" >> .env
+
+            # Docker 업데이트 및 재배포
+            docker pull compliment-lab-server.kr.ncr.ntruss.com/compliment-lab-server:latest
+            docker-compose down
+            docker-compose up -d --build
             docker system prune -f
