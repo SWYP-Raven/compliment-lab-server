@@ -4,7 +4,7 @@ FROM openjdk:17-jdk
 # Set the working directory
 WORKDIR /app
 
-COPY --from=builder /app/build/libs/compliment-lab-server-0.0.1-SNAPSHOT.jar /app/app.jar
+COPY /build/libs/compliment-lab-server-0.0.1-SNAPSHOT.jar /app/app.jar
 
 # Expose the application port
 EXPOSE 8080
