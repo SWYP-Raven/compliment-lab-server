@@ -16,6 +16,7 @@ jobs:
       # 2. application-prod.yml 생성
       - name: Create application-prod.yml
         run: |
+          mkdir src/main/resources
           echo "${{ secrets.APPLICATION_PROD }}" > src/main/resources/application-prod.yml
 
       # 3. JDK 17 설정
