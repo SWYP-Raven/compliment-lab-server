@@ -38,6 +38,6 @@ jobs:
           username: ${{ secrets.DEV_SERVER_USERNAME }}
           key: ${{ secrets.DEV_SERVER_SSH_KEY }}
           script: |
-            docker pull compliment-lab-server.kr.ncr.ntruss.com/compliment-lab-server:latest --no-cache
+            docker pull compliment-lab-server.kr.ncr.ntruss.com/compliment-lab-server:latest
             docker-compose up -d --force-recreate
             docker system prune -f
