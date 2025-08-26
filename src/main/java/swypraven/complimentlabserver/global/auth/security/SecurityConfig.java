@@ -47,9 +47,13 @@ public class SecurityConfig {
                 // 요청 권한 설정
                 // SecurityConfig
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**", "/actuator/**").permitAll()  // 수정
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/favicon.ico").permitAll()
+                        .requestMatchers(
+                                "/api/v1/auth/**",
+                                "/api/v1/compliments/today",   // ✅ 오늘의 칭찬 조회 공개
+                                "/v3/api-docs/**", "/swagger-ui/**",
+                                "/actuator/**",
+                                "/favicon.ico"
+                        ).permitAll()
                         .requestMatchers("/user/test").hasRole("USER")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

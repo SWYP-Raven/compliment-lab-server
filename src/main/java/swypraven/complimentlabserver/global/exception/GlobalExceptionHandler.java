@@ -19,6 +19,8 @@ import swypraven.complimentlabserver.global.exception.user.UserException;
 import swypraven.complimentlabserver.global.response.ApiResponse;
 import swypraven.complimentlabserver.global.response.ErrorResponse;
 
+import java.util.Map;
+
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -74,5 +76,17 @@ public class GlobalExceptionHandler {
         log.warn("[JWT/NIMBUS] {}", e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ErrorResponse.from(AuthErrorCode.TOKEN_INVALID)); // 메시지는 마스킹
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("code", "DUPLICATE_TODAY", "message", e.getMessage()));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("code", "BAD_REQUEST", "message", e.getMessage()));
     }
 }

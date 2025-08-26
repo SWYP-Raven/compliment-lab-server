@@ -29,6 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/v1/auth/apple/login",
             "/api/v1/auth/apple/signup",
             "/api/v1/auth/token/refresh",
+            "/api/v1/compliments/today",
             "/actuator/",
             "/swagger-ui/",
             "/v3/api-docs",
