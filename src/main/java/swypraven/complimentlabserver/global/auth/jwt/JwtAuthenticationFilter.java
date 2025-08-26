@@ -26,7 +26,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // JwtAuthenticationFilter
     private static final List<String> EXCLUDED_PATHS = Arrays.asList(
-            "/api/v1/auth/",   // 추가
+            "/api/v1/auth/apple/login",
+            "/api/v1/auth/apple/signup",
+            "/api/v1/auth/token/refresh",
             "/actuator/",
             "/swagger-ui/",
             "/v3/api-docs",

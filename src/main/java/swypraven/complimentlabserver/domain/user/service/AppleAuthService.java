@@ -2,7 +2,6 @@ package swypraven.complimentlabserver.domain.user.service;
 
 import com.nimbusds.jwt.JWTClaimsSet;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -11,48 +10,77 @@ import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.model.response.AppleLoginResponse;
 import swypraven.complimentlabserver.global.auth.jwt.JwtToken;
 import swypraven.complimentlabserver.global.auth.jwt.JwtTokenProvider;
+import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
 
 import java.text.ParseException;
 import java.util.List;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AppleAuthService {
 
-    private final AppleIdTokenValidator appleIdTokenValidator; // 서명/클레임 검증(런타임 예외로 래핑)
+    private final AppleIdTokenValidator appleIdTokenValidator;
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
 
-    /**
-     * 애플 로그인 플로우:
-     * 1) idToken 검증(서명 + iss/aud 등)
-     * 2) 사용자 조회/생성
-     * 3) Access/Refresh 발급
-     * (체크 예외는 모두 validator 내부에서 런타임으로 래핑됨)
-     */
+    // 로그인: 존재하는 사용자만 허용
     public AppleLoginResponse appleLogin(String idToken) throws ParseException {
-        // 1) 토큰 검증 (유효하지 않으면 LoginFailedException.* 런타임 예외 발생)
         JWTClaimsSet claims = appleIdTokenValidator.validate(idToken);
-
-        // 2) 사용자 조회/생성 (애플은 최초 로그인 때만 email 제공될 수 있음)
+        String sub = claims.getSubject();
         String email = claims.getStringClaim("email"); // null 가능
-        String sub = claims.getSubject();              // 애플 고유 사용자 ID(고정)
-        User user = userService.findOrCreateByAppleSub(sub, email);
 
-        // 3) JWT 발급
+        // 존재 여부 체크
+        User user = userService.findByAppleSubOptional(sub)
+                .orElseThrow(() -> new LoginFailedException.InvalidJwtTokenException("가입되지 않은 사용자입니다. 회원가입이 필요합니다."));
+
+        // 이메일이 새로 들어왔다면(최초 이후), 비어있는 경우에만 업데이트
+        if (user.getEmail() == null && email != null) {
+            user.setEmail(email);
+        }
+
+        JwtToken token = issue(user);
+        return toLoginResponse(token, user);
+
+    }
+
+    // 회원가입: 닉네임까지 받아 새 사용자 생성 후 토큰 발급
+    public AppleLoginResponse appleSignup(String idToken, String nickname) throws ParseException {
+        JWTClaimsSet claims = appleIdTokenValidator.validate(idToken);
+        String sub = claims.getSubject();
+        String email = claims.getStringClaim("email"); // null 가능
+
+        // 이미 있으면 에러(또는 멱등 처리하고 바로 로그인 토큰 발급해도 됨. 팀 컨벤션에 맞춰 선택)
+        if (userService.existsByAppleSub(sub)) {
+            throw new LoginFailedException.InvalidJwtTokenException("이미 가입된 사용자입니다. 로그인 해주세요.");
+        }
+
+        // 새 사용자 생성 (닉네임 필수)
+        User user = userService.createUserWithApple(sub, email, nickname);
+
+        // ✅ 수정
+        JwtToken token = issue(user);
+        return toLoginResponse(token, user);
+
+    }
+
+    private JwtToken issue(User user) {
         Authentication authentication = new UsernamePasswordAuthenticationToken(
-                user.getAppleSub(), // 또는 userId
+                user.getAppleSub(),
                 null,
-                List.of(new SimpleGrantedAuthority(user.getRole())) // ROLE_USER
+                List.of(new SimpleGrantedAuthority(user.getRole()))
         );
-        JwtToken jwtToken = jwtTokenProvider.generateToken(authentication, user); // user 넘겨서 email/role 클레임 포함
+        return jwtTokenProvider.generateToken(authentication, user);
+    }
 
-
+    private AppleLoginResponse toLoginResponse(JwtToken jwtToken, User user) {
         return AppleLoginResponse.builder()
-                .grantType(jwtToken.grantType())   // 보통 "Bearer"
+                .grantType(jwtToken.grantType())
                 .accessToken(jwtToken.accessToken())
                 .refreshToken(jwtToken.refreshToken())
+                .email(user.getEmail())
+                .nickname(user.getNickname())
+                .role(user.getRole())
                 .build();
     }
+
 }
