@@ -11,7 +11,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
+import swypraven.complimentlabserver.global.exception.auth.AuthErrorCode;
+import swypraven.complimentlabserver.global.exception.auth.AuthException;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -26,7 +27,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // JwtAuthenticationFilter
     private static final List<String> EXCLUDED_PATHS = Arrays.asList(
-            "/api/v1/auth/",   // 추가
+            "/auth/apple/login",
+            "/auth/apple/signup",
+            "/auth/token/refresh",
             "/actuator/",
             "/swagger-ui/",
             "/v3/api-docs",
@@ -55,10 +58,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 log.debug("JWT 인증 성공: user={}, uri={}", authentication.getName(), requestURI);
             }
 
-        } catch (LoginFailedException.InvalidJwtTokenException e) {
+        } catch (Exception e) {
             log.warn("JWT 처리 중 예외 발생: {}", e.getMessage());
             // response.write 대신 예외를 던져서 EntryPoint로 위임
-            throw e;
+            throw new AuthException(AuthErrorCode.TOKEN_INVALID);
         }
 
         filterChain.doFilter(request, response);
@@ -70,6 +73,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
+
+        log.info("Bearer token: {}", bearerToken);
 
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             String token = bearerToken.substring(7).trim();
