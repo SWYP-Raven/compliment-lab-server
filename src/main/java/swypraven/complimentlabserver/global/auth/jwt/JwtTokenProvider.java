@@ -10,10 +10,16 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
 
 import jakarta.annotation.PostConstruct;
+import swypraven.complimentlabserver.domain.user.entity.User;
+import swypraven.complimentlabserver.domain.user.repository.UserRepository;
+import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
+import swypraven.complimentlabserver.global.exception.auth.AuthErrorCode;
+import swypraven.complimentlabserver.global.exception.auth.AuthException;
+import swypraven.complimentlabserver.global.exception.user.UserErrorCode;
+import swypraven.complimentlabserver.global.exception.user.UserException;
+
 import java.security.Key;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,6 +28,7 @@ import java.util.stream.Collectors;
 @Component
 public class JwtTokenProvider {
 
+    private final UserRepository userRepository;
     private Key key;
 
     @Value("${jwt.secret.key}")
@@ -32,6 +39,10 @@ public class JwtTokenProvider {
 
     @Value("${jwt.refresh-token.expiry:604800}") // seconds (7d)
     private long refreshTokenExpiry;
+
+    public JwtTokenProvider(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @PostConstruct
     public void init() {
@@ -52,7 +63,7 @@ public class JwtTokenProvider {
      * Access 토큰에는 권한(auth) + 선택 클레임(uid,email,role) 포함
      */
     public JwtToken generateToken(Authentication authentication,
-                                  swypraven.complimentlabserver.domain.user.entity.User user) {
+                                  User user) {
 
         final long now = System.currentTimeMillis();
         final String subject = Optional.ofNullable(authentication.getName()).orElse("");
@@ -124,18 +135,24 @@ public class JwtTokenProvider {
 
         if (authClaim == null || authClaim.isBlank()) {
             // Access 토큰이 아니거나 권한 정보가 없는 경우
-            throw new LoginFailedException.InvalidJwtTokenException("권한 정보가 없는 토큰입니다.");
+            throw new AuthException(AuthErrorCode.JWT_TOKEN_INVALID);
         }
 
-        Collection<? extends GrantedAuthority> authorities =
+        List<? extends GrantedAuthority> authorities =
                 Arrays.stream(authClaim.split(","))
                         .map(String::trim)
                         .filter(s -> !s.isEmpty())
                         .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
+                        .toList();
 
-        User principal = new User(claims.getSubject(), "", authorities);
-        return new UsernamePasswordAuthenticationToken(principal, "", authorities);
+
+        String appleSub = claims.getSubject();
+        User user = userRepository.findByAppleSub(appleSub)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+
+
+        CustomUserDetails principal = new CustomUserDetails(user, authorities);
+        return new UsernamePasswordAuthenticationToken(principal, null, authorities);
     }
 
     private Claims parseClaims(String token) {
@@ -146,7 +163,7 @@ public class JwtTokenProvider {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (JwtException | IllegalArgumentException e) {
-            throw new LoginFailedException.InvalidJwtTokenException("유효하지 않은 JWT 토큰입니다: " + e.getMessage(), e);
+            throw new AuthException(AuthErrorCode.JWT_TOKEN_INVALID);
         }
     }
 
@@ -156,7 +173,7 @@ public class JwtTokenProvider {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
-            throw new LoginFailedException.InvalidJwtTokenException("유효하지 않은 JWT 토큰입니다: " + e.getMessage(), e);
+            throw new AuthException(AuthErrorCode.JWT_TOKEN_INVALID);
         }
     }
 

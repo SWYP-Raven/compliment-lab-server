@@ -1,20 +1,25 @@
-// src/main/java/.../domain/user/service/AppleIdTokenValidatorImpl.java
 package swypraven.complimentlabserver.domain.user.service;
 
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.jwk.source.RemoteJWKSet;
+import com.nimbusds.jose.proc.JWSVerificationKeySelector;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
+import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
+import swypraven.complimentlabserver.global.exception.auth.AuthErrorCode;
+import swypraven.complimentlabserver.global.exception.auth.AuthException;
 
 import java.net.URL;
 
 @Slf4j
 @Service
-@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+@ConditionalOnProperty(
         value = "apple.stub",
         havingValue = "false",
         matchIfMissing = true // 기본은 실제 구현
@@ -35,35 +40,26 @@ public class AppleIdTokenValidatorImpl implements AppleIdTokenValidator {
             ConfigurableJWTProcessor<SecurityContext> jwtProcessor = createJwtProcessor();
             JWTClaimsSet claims = jwtProcessor.process(signed, null);
 
-            if (!ISS.equals(claims.getIssuer())) {
-                throw new LoginFailedException.AppleIdTokenValidationException("iss 불일치");
-            }
-            if (!claims.getAudience().contains(appleClientId)) {
-                throw new LoginFailedException.AppleIdTokenValidationException("aud 불일치");
+            if (!ISS.equals(claims.getIssuer()) || !claims.getAudience().contains(appleClientId)) {
+                throw new AuthException(AuthErrorCode.JWT_SIGNATURE_INVALID);
             }
 //             //만료 체크를 켜고 싶으면 주석 해제
 //             Date exp = claims.getExpirationTime();
 //             if (exp == null || exp.before(new Date())) {
-//                 throw new LoginFailedException.AppleIdTokenValidationException("토큰 만료");
+//                    throw new AuthException(AuthErrorCode.JWT_TOKEN_EXPIRED);
 //             }
 
             return claims;
-
-        } catch (LoginFailedException.AppleIdTokenValidationException e) {
-            throw e;
         } catch (Exception e) {
-            log.error("Apple ID Token 파싱/검증 실패", e);
-            throw new LoginFailedException.AppleIdTokenValidationException(
-                    "Apple ID Token 파싱/검증 실패: " + e.getMessage(), e);
+            throw new AuthException(AuthErrorCode.APPLE_AUTH_FAILED);
         }
     }
 
     // RS256 서명 검증용 JWKS 셋업 (캐싱 포함)
     ConfigurableJWTProcessor<SecurityContext> createJwtProcessor() throws Exception {
-        var jwkSource = new com.nimbusds.jose.jwk.source.RemoteJWKSet<SecurityContext>(new URL(JWK_URL));
-        var selector  = new com.nimbusds.jose.proc.JWSVerificationKeySelector<SecurityContext>(
-                com.nimbusds.jose.JWSAlgorithm.RS256, jwkSource);
-        var p = new com.nimbusds.jwt.proc.DefaultJWTProcessor<SecurityContext>();
+        RemoteJWKSet<SecurityContext> jwkSource = new RemoteJWKSet<>(new URL(JWK_URL));
+        JWSVerificationKeySelector<SecurityContext> selector = new JWSVerificationKeySelector<>(JWSAlgorithm.RS256, jwkSource);
+        DefaultJWTProcessor<SecurityContext> p = new DefaultJWTProcessor<>();
         p.setJWSKeySelector(selector);
         p.setJWTClaimsSetVerifier((claims, context) -> { /* 수동 검증은 위에서 */ });
         return p;

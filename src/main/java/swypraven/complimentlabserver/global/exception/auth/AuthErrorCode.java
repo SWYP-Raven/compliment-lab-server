@@ -30,7 +30,11 @@ public enum AuthErrorCode implements ErrorCode {
     // 범용(외부 라이브러리 예외 매핑 등)
     TOKEN_INVALID("AUTH_014", "토큰 파싱/검증에 실패했습니다.", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED("AUTH_015", "인증이 필요합니다.", HttpStatus.UNAUTHORIZED),
-    INTERNAL_ERROR("AUTH_999", "내부 인증 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
+    INTERNAL_ERROR("AUTH_999", "내부 인증 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+
+    EXIST_USER("AUTH_016", "이미 가입된 회원입니다.", HttpStatus.BAD_REQUEST),
+    NONE_EXIST_USER("AUTH_17", "가입되지 않은 회원입니다.", HttpStatus.UNAUTHORIZED),
+    ;
 
     private final String code;
     private final String message;
