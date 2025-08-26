@@ -15,7 +15,7 @@ import swypraven.complimentlabserver.domain.friend.model.response.ResponseFriend
 import swypraven.complimentlabserver.domain.friend.repository.FriendRepository;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
-import swypraven.complimentlabserver.domain.user.service.UserService;
+import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
 import swypraven.complimentlabserver.global.exception.friend.FriendErrorCode;
 import swypraven.complimentlabserver.global.exception.friend.FriendException;
 import swypraven.complimentlabserver.global.exception.user.UserErrorCode;
@@ -33,9 +33,9 @@ public class FriendService {
     private final ChatService chatService;
 
     @Transactional
-    public ResponseFriend create(RequestCreateFriend request) {
-        // TODO: 유저 로직
-        User user = userRepository.findById(1L).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+    public ResponseFriend create(CustomUserDetails userDetails, RequestCreateFriend request) {
+
+        User user = userRepository.findById(userDetails.getId()).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
         TypeCompliment type = complimentTypeService.getType(request.getFriendType());
 
@@ -51,8 +51,8 @@ public class FriendService {
 
 
     @Transactional(readOnly = true)
-    public List<ResponseFriend> getFriends() {
-        User user = userRepository.findById(1L).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+    public List<ResponseFriend> getFriends(CustomUserDetails userDetails) {
+        User user = userRepository.findById(userDetails.getId()).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
         List<Friend> friends = friendRepository.findAllByUser(user);
 
         return friends.stream().map(friend -> {

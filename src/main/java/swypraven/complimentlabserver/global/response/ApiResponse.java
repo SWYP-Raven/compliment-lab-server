@@ -57,7 +57,7 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> of(boolean success, T data, String message) {
         return ApiResponse.<T>builder()
                 .success(success)
-                .code(success ? "SUCCESS" : "ERROR")
+                .code(success ? null : "ERROR") // ★ 성공이면 null, 실패면 "ERROR"
                 .message(message)
                 .data(data)
                 .build();

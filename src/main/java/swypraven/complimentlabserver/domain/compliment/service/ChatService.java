@@ -22,6 +22,7 @@ import swypraven.complimentlabserver.domain.friend.repository.ChatRepository;
 import swypraven.complimentlabserver.domain.friend.repository.FriendRepository;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
+import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
 import swypraven.complimentlabserver.global.exception.chat.ChatErrorCode;
 import swypraven.complimentlabserver.global.exception.chat.ChatException;
 import swypraven.complimentlabserver.global.exception.friend.FriendErrorCode;
@@ -29,13 +30,10 @@ import swypraven.complimentlabserver.global.exception.friend.FriendException;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
-import swypraven.complimentlabserver.domain.compliment.model.dto.naver.response.ResponseNavarClovaChat;
-import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
-import swypraven.complimentlabserver.domain.compliment.model.response.ResponseMessage;
-import swypraven.complimentlabserver.domain.friend.entity.Chat;
-import swypraven.complimentlabserver.domain.friend.entity.Friend;
-import swypraven.complimentlabserver.domain.friend.repository.ChatRepository;
-import swypraven.complimentlabserver.domain.friend.service.FriendService;
+
+import swypraven.complimentlabserver.global.exception.user.UserErrorCode;
+import swypraven.complimentlabserver.global.exception.user.UserException;
+
 import java.util.List;
 
 @Service
@@ -92,9 +90,8 @@ public class ChatService {
 
 
     @Transactional
-    public void saveMessage(Long messageId) {
-        // TODO: 유저 정보 가져오기
-        User user = userRepository.findById(1L).get();
+    public void saveMessage(CustomUserDetails userDetails, Long messageId) {
+        User user = userRepository.findById(userDetails.getId()).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
         Chat chat = chatRepository.findById(messageId).orElseThrow(() -> new ChatException(ChatErrorCode.NOT_FOUND));
 
@@ -106,9 +103,8 @@ public class ChatService {
     }
 
     @Transactional(readOnly = true)
-    public ChatResponseSlice findAllSavedChat(int size, LocalDateTime lastCreatedAt) {
-        // TODO: 유저 정보 가져오기
-        User user = userRepository.findById(1L).get();
+    public ChatResponseSlice findAllSavedChat(CustomUserDetails userDetails, int size, LocalDateTime lastCreatedAt) {
+        User user = userRepository.findById(userDetails.getId()).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
         Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Slice<ChatCompliment> chats = chatComplimentRepository.findNextChats(user, lastCreatedAt, pageable);
@@ -121,7 +117,7 @@ public class ChatService {
 
     @Transactional(readOnly = true)
     public ChatResponse findLastChats(Friend friend) {
-        Chat chat = chatRepository.findFirstByFriendOrderByCreatedAtDesc(friend).orElseThrow(() -> new ChatException(ChatErrorCode.NOT_FOUND));
+        Chat chat = chatRepository.findFirstByFriendOrderByCreatedAtDesc(friend).orElseGet(() -> new Chat("", RoleType.USER, friend));
         return new ChatResponse(chat);
     }
 }

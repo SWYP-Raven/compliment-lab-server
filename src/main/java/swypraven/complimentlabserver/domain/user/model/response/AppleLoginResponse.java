@@ -7,5 +7,8 @@ import lombok.Builder;
 public record AppleLoginResponse(
         String grantType,
         String accessToken,
-        String refreshToken
+        String refreshToken,
+        String email,
+        String nickname,
+        String role
 ) {}
