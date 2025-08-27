@@ -20,7 +20,7 @@ public class ArchiveController {
     private final ArchiveService archiveService;
 
     // ===== 오늘의 칭찬 =====
-    @PostMapping("/today")
+    @PostMapping("/today") //저장
     public ResponseEntity<TodayArchiveItem> saveToday(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @Valid @RequestBody SaveTodayRequest req) {
@@ -28,7 +28,7 @@ public class ArchiveController {
         return ResponseEntity.ok(saved);
     }
 
-    @GetMapping("/today")
+    @GetMapping("/today") //목록
     public ResponseEntity<PageResponse<TodayArchiveItem>> listToday(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @RequestParam(defaultValue = "0") int page,
@@ -38,7 +38,7 @@ public class ArchiveController {
         return ResponseEntity.ok(PageResponse.from(result));
     }
 
-    @DeleteMapping("/today/{id}")
+    @DeleteMapping("/today/{id}") //삭제
     public ResponseEntity<Void> deleteToday(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @PathVariable Long id) {
@@ -47,7 +47,7 @@ public class ArchiveController {
     }
 
     // ===== 대화 카드 =====
-    @PostMapping("/chat-cards")
+    @PostMapping("/chat-cards")//대화 저장
     public ResponseEntity<ChatCardArchiveItem> saveChatCard(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @Valid @RequestBody SaveChatCardRequest req) {
@@ -56,7 +56,7 @@ public class ArchiveController {
         return ResponseEntity.ok(saved);
     }
 
-    @GetMapping("/chat-cards")
+    @GetMapping("/chat-cards")//대화 목록
     public ResponseEntity<PageResponse<ChatCardArchiveItem>> listChatCards(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @RequestParam(required = false) String q,
@@ -67,7 +67,7 @@ public class ArchiveController {
         return ResponseEntity.ok(PageResponse.from(result));
     }
 
-    @DeleteMapping("/chat-cards/{id}")
+    @DeleteMapping("/chat-cards/{id}")//대화 삭제
     public ResponseEntity<Void> deleteChatCard(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @PathVariable Long id) {

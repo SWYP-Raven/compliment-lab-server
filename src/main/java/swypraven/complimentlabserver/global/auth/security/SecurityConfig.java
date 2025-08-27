@@ -49,6 +49,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/v1/auth/**",
+                                "/api/v1/archive/chat-cards",
                                 "/api/v1/compliments/today",   // ✅ 오늘의 칭찬 조회 공개
                                 "/v3/api-docs/**", "/swagger-ui/**",
                                 "/actuator/**",

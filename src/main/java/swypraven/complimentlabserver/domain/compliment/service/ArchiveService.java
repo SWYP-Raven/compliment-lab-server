@@ -2,11 +2,12 @@ package swypraven.complimentlabserver.domain.compliment.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 import swypraven.complimentlabserver.domain.compliment.model.response.ArchiveDtos.*;
 
 import java.util.Map;
-
 public interface ArchiveService {
+    @Transactional(readOnly = false)
 
     // 오늘의 칭찬(텍스트)
     TodayArchiveItem saveToday(Long userId, Long todayId);
