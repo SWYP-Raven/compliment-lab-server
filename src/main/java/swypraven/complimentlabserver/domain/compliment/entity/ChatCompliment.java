@@ -7,14 +7,11 @@ import org.hibernate.type.SqlTypes;
 import swypraven.complimentlabserver.domain.friend.entity.Chat;
 import swypraven.complimentlabserver.domain.user.entity.User;
 
-import java.time.Instant;
 import java.util.Map;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
-import swypraven.complimentlabserver.domain.friend.entity.Chat;
-import swypraven.complimentlabserver.domain.user.entity.User;
 
 import java.time.LocalDateTime;
 
@@ -30,8 +27,8 @@ import java.time.LocalDateTime;
         name = "chat_compliment",
         schema = "compliment_lab",
         indexes = {
-                @Index(name = "ix_chat_comp_user_created", columnList = "user_id, created_at")
-        }
+                @Index(name = "ix_chat_comp_user_created", columnList = "user_id, created_at")}
+)
 public class ChatCompliment {
 
     public ChatCompliment(User user, Chat chat) {
@@ -66,17 +63,13 @@ public class ChatCompliment {
     @Column(name = "payload", columnDefinition = "json")
     private Map<String, Object> payload;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
-
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
   
     @PrePersist
     void prePersist() {
-        if (createdAt == null) createdAt = Instant.now();
+        if (createdAt == null) createdAt = LocalDateTime.now();
     }
 
     // 원하면 빌더 대신 사용 가능한 팩토리 메서드

@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 public class ArchiveDtos {
@@ -17,7 +17,7 @@ public class ArchiveDtos {
         private Long todayId;         // today_compliment.id
         private Long typeId;          // type_compliment.id
         private String message;       // today_compliment.message
-        private Instant createdAt;
+        private LocalDateTime createdAt;
     }
 
     @Getter
@@ -30,6 +30,6 @@ public class ArchiveDtos {
         private String thumbUrl;      // nullable
         private Map<String, Object> payload; // nullable
         private String chatMessage;   // 미리보기용
-        private Instant createdAt;
+        private LocalDateTime createdAt;
     }
 }

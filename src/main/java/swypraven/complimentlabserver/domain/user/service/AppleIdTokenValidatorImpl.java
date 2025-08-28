@@ -12,12 +12,8 @@ import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Service;
 import swypraven.complimentlabserver.global.exception.auth.AuthErrorCode;
 import swypraven.complimentlabserver.global.exception.auth.AuthException;
 
@@ -25,7 +21,6 @@ import java.net.URL;
 
 @Slf4j
 @Service
-@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
 @ConditionalOnProperty(
         value = "apple.stub",
         havingValue = "false",
@@ -58,8 +53,6 @@ public class AppleIdTokenValidatorImpl implements AppleIdTokenValidator {
 
             return claims;
 
-        } catch (LoginFailedException.AppleIdTokenValidationException e) {
-            throw e;
         } catch (Exception e) {
             log.error("Apple ID Token 파싱/검증 실패", e);
             throw new AuthException(AuthErrorCode.APPLE_AUTH_FAILED);

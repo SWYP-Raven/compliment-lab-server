@@ -11,15 +11,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
-import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
-import jakarta.annotation.PostConstruct;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
-import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
 import swypraven.complimentlabserver.global.exception.auth.AuthErrorCode;
 import swypraven.complimentlabserver.global.exception.auth.AuthException;
-import swypraven.complimentlabserver.global.exception.user.UserErrorCode;
-import swypraven.complimentlabserver.global.exception.user.UserException;
+
 import java.security.Key;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -56,24 +52,7 @@ public class JwtTokenProvider {
             throw new IllegalStateException("JWT Secret Key가 올바르지 않습니다.");
         }
     }
-  
-    /* ------------------------------------------------------------------
-     * 토큰 생성 (단건: 액세스)
-     *  - 클레임: userId, role, auth(콤마 구분)
-     *  - subject는 필요에 따라 userId 또는 외부 식별자(appleSub) 사용 가능
-     * ------------------------------------------------------------------ */
-    public String createAccessToken(Long userId, String role) {
-        Date now = new Date();
-        Date exp = new Date(now.getTime() + accessTokenExpiry);
-        return Jwts.builder()
-                .setSubject(String.valueOf(userId))   // 필요시 appleSub로 교체 가능
-                .claim("userId", userId)              // ✅ 통일: userId
-                .claim("role", role)
-                .claim("auth", role)                  // 다중 권한이면 콤마구분 "A,B"
-                .setIssuedAt(now).setExpiration(exp)
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
-    }
+
 
     /* ------------------------------------------------------------------
      * 토큰 생성 (액세스 + 리프레시 묶음)
@@ -82,9 +61,6 @@ public class JwtTokenProvider {
      * ------------------------------------------------------------------ */
     public JwtToken generateToken(Authentication authentication,
                                   User user) {
-
-        final long now = System.currentTimeMillis();
-        final String subject = Optional.ofNullable(authentication.getName()).orElse("");
 
         final long now = System.currentTimeMillis();
         final String subject = Optional.ofNullable(authentication != null ? authentication.getName() : null).orElse("");
@@ -162,7 +138,7 @@ public class JwtTokenProvider {
                         : (role.isBlank() ? List.of() : List.of(new SimpleGrantedAuthority(role)));
 
         if (authorities.isEmpty()) {
-            throw new LoginFailedException.InvalidJwtTokenException("권한 정보가 없는 토큰입니다.");
+            throw new AuthException(AuthErrorCode.JWT_TOKEN_INVALID);
         }
 
         // userId 추출(우선순위: userId -> uid(호환) -> subject Long)
@@ -170,7 +146,9 @@ public class JwtTokenProvider {
         if (userId == null) userId = extractLong(c, "uid");
         if (userId == null) {
             try { userId = Long.valueOf(c.getSubject()); }
-            catch (Exception e) { throw new LoginFailedException.InvalidJwtTokenException("userId 클레임 없음"); }
+            catch (Exception e) {
+                throw new AuthException(AuthErrorCode.TOKEN_INVALID);
+            }
         }
 
         String subject = c.getSubject(); // appleSub 등 외부 식별자 보관용
@@ -223,6 +201,6 @@ public class JwtTokenProvider {
     }
 
     public boolean isRefreshToken(String refreshToken) {
-        return "refresh".equals(parseClaims(refreshToken).get("typ", String.class));
+        return "refresh".equals(parseClaims(refreshToken).get("type", String.class));
     }
 }

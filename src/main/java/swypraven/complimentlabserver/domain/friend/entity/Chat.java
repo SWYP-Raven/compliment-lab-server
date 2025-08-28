@@ -2,7 +2,6 @@ package swypraven.complimentlabserver.domain.friend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.Instant;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
@@ -43,10 +42,10 @@ public class Chat {
 
     @PrePersist
     void prePersist() {
-        if (createdAt == null) createdAt = Instant.now();
-        if (role == null) role = ChatRole.user;
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (role == null) role = RoleType.USER;
     }
-}
+
     @Column(name = "message", length = Integer.MAX_VALUE)
     private String message;
 

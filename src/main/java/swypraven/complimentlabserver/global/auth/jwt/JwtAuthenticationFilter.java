@@ -8,8 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
@@ -73,7 +71,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // 2-2) 토큰이 있는데 유효하지 않으면 예외 → EntryPoint로 위임 (401)
             if (!jwtTokenProvider.validateToken(token)) {
-                throw new LoginFailedException.InvalidJwtTokenException("Invalid or expired token");
+                throw new AuthException(AuthErrorCode.REFRESH_TOKEN_INVALID);
             }
 
         } catch (Exception e) {
