@@ -33,6 +33,7 @@ public class AppleAuthService {
         // 존재 여부 체크
         User user = userService.findByAppleSubOptional(sub)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.NONE_EXIST_USER));
+      
 
         // 이메일이 새로 들어왔다면(최초 이후), 비어있는 경우에만 업데이트
         if (user.getEmail() == null && email != null) {
@@ -49,7 +50,6 @@ public class AppleAuthService {
         JWTClaimsSet claims = appleIdTokenValidator.validate(idToken);
         String sub = claims.getSubject();
         String email = claims.getStringClaim("email"); // null 가능
-
         if (userService.existsByAppleSub(sub)) {
             throw new AuthException(AuthErrorCode.EXIST_USER);
         }

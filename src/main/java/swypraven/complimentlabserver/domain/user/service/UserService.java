@@ -21,6 +21,36 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
+  
+    /**
+     * Apple sub(고유 ID) 기준으로 조회하고 없으면 생성
+     * email은 첫 로그인에만 제공될 수 있으니 null 허용, 업데이트 가능하게 처리
+     */
+    @Transactional
+    public User findOrCreateByAppleSub(String appleSub, String email) {
+        String sub = normalizeSub(appleSub);
+        String normEmail = normalizeEmail(email);
+
+        return userRepository.findByAppleSub(sub)
+                .map(user -> {
+                    if (user.getEmail() == null && normEmail != null) {
+                        user.setEmail(normEmail);
+                    }
+                    if (user.getRole() == null || user.getRole().isBlank()) {
+                        user.setRole("ROLE_USER");
+                    } else if (!user.getRole().startsWith("ROLE_")) {
+                        user.setRole("ROLE_" + user.getRole());
+                    }
+                    return user;
+                })
+                .orElseGet(() -> {
+                    User u = new User();
+                    u.setAppleSub(sub);
+                    u.setEmail(normEmail);       // null 가능
+                    u.setRole("ROLE_USER");      // 기본 권한
+                    return userRepository.save(u);
+                });
+    }
 
     public Optional<User> findByAppleSubOptional(String appleSub) {
         return userRepository.findByAppleSub(normalizeSub(appleSub));
@@ -58,6 +88,10 @@ public class UserService implements UserDetailsService {
 
     public Optional<User> findByRefreshToken(String refreshToken) {
         return userRepository.findByRefreshToken(refreshToken);
+    }
+
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(normalizeEmail(email));
     }
 
     /**
