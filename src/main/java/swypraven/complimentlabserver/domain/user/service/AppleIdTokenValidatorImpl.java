@@ -1,4 +1,6 @@
+// src/main/java/.../domain/user/service/AppleIdTokenValidatorImpl.java
 package swypraven.complimentlabserver.domain.user.service;
+
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.source.RemoteJWKSet;
@@ -7,6 +9,10 @@ import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +25,7 @@ import java.net.URL;
 
 @Slf4j
 @Service
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
 @ConditionalOnProperty(
         value = "apple.stub",
         havingValue = "false",
@@ -46,11 +53,15 @@ public class AppleIdTokenValidatorImpl implements AppleIdTokenValidator {
 //             //만료 체크를 켜고 싶으면 주석 해제
 //             Date exp = claims.getExpirationTime();
 //             if (exp == null || exp.before(new Date())) {
-//                    throw new AuthException(AuthErrorCode.JWT_TOKEN_EXPIRED);
+//                 throw new LoginFailedException.AppleIdTokenValidationException("토큰 만료");
 //             }
 
             return claims;
+
+        } catch (LoginFailedException.AppleIdTokenValidationException e) {
+            throw e;
         } catch (Exception e) {
+            log.error("Apple ID Token 파싱/검증 실패", e);
             throw new AuthException(AuthErrorCode.APPLE_AUTH_FAILED);
         }
     }
