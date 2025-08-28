@@ -9,6 +9,14 @@ import swypraven.complimentlabserver.domain.user.entity.User;
 
 import java.time.Instant;
 import java.util.Map;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import swypraven.complimentlabserver.domain.friend.entity.Chat;
+import swypraven.complimentlabserver.domain.user.entity.User;
+
+import java.time.LocalDateTime;
 
 // 카드 아카이브: 이미지 기반
 @Getter
@@ -24,9 +32,13 @@ import java.util.Map;
         indexes = {
                 @Index(name = "ix_chat_comp_user_created", columnList = "user_id, created_at")
         }
-)
 public class ChatCompliment {
 
+    public ChatCompliment(User user, Chat chat) {
+        this.user = user;
+        this.chat = chat;
+    }
+  
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -42,7 +54,7 @@ public class ChatCompliment {
     private User user;
 
     /** 공개 URL (S3 등) */
-    @Column(name = "image_url", nullable = false, length = 512)
+    @Column(name = "image_url", length = 512)
     private String imageUrl;
 
     /** 썸네일(옵션) */
@@ -54,9 +66,14 @@ public class ChatCompliment {
     @Column(name = "payload", columnDefinition = "json")
     private Map<String, Object> payload;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
+    @CreatedDate
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+  
     @PrePersist
     void prePersist() {
         if (createdAt == null) createdAt = Instant.now();

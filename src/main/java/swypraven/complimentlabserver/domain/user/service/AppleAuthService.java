@@ -11,6 +11,8 @@ import swypraven.complimentlabserver.domain.user.model.response.AppleLoginRespon
 import swypraven.complimentlabserver.global.auth.jwt.JwtToken;
 import swypraven.complimentlabserver.global.auth.jwt.JwtTokenProvider;
 import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
+import swypraven.complimentlabserver.global.exception.auth.AuthErrorCode;
+import swypraven.complimentlabserver.global.exception.auth.AuthException;
 
 import java.text.ParseException;
 import java.util.List;
@@ -31,7 +33,8 @@ public class AppleAuthService {
 
         // 존재 여부 체크
         User user = userService.findByAppleSubOptional(sub)
-                .orElseThrow(() -> new LoginFailedException.InvalidJwtTokenException("가입되지 않은 사용자입니다. 회원가입이 필요합니다."));
+                .orElseThrow(() -> new AuthException(AuthErrorCode.NONE_EXIST_USER));
+      
 
         // 이메일이 새로 들어왔다면(최초 이후), 비어있는 경우에만 업데이트
         if (user.getEmail() == null && email != null) {
@@ -48,10 +51,8 @@ public class AppleAuthService {
         JWTClaimsSet claims = appleIdTokenValidator.validate(idToken);
         String sub = claims.getSubject();
         String email = claims.getStringClaim("email"); // null 가능
-
-        // 이미 있으면 에러(또는 멱등 처리하고 바로 로그인 토큰 발급해도 됨. 팀 컨벤션에 맞춰 선택)
         if (userService.existsByAppleSub(sub)) {
-            throw new LoginFailedException.InvalidJwtTokenException("이미 가입된 사용자입니다. 로그인 해주세요.");
+            throw new AuthException(AuthErrorCode.EXIST_USER);
         }
 
         // 새 사용자 생성 (닉네임 필수)
