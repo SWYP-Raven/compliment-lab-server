@@ -30,10 +30,13 @@ public class AppleAuthService {
         String email = claims.getStringClaim("email"); // null 가능
 
         FindOrCreateAppleUserDto findOrCreateResponse = userService.findOrCreateByAppleSub(sub, email);
-
         JwtToken token = issue(findOrCreateResponse.getUser());
-        return toResponse(token, findOrCreateResponse);
 
+
+        if(findOrCreateResponse.getIsSignUp()) { // 로그인일 경우
+            return new AppleAuthResponse(token, findOrCreateResponse);
+        }
+        return new AppleAuthResponse(findOrCreateResponse);
     }
 
     private JwtToken issue(User user) {
@@ -45,15 +48,4 @@ public class AppleAuthService {
         return jwtTokenProvider.generateToken(authentication, user);
     }
 
-    private AppleAuthResponse toResponse(JwtToken jwtToken, FindOrCreateAppleUserDto findOrCreateResponse) {
-        return AppleAuthResponse.builder()
-                .grantType(jwtToken.grantType())
-                .accessToken(jwtToken.accessToken())
-                .refreshToken(jwtToken.refreshToken())
-                .email(findOrCreateResponse.getUser().getEmail())
-                .nickname(findOrCreateResponse.getUser().getNickname())
-                .role(findOrCreateResponse.getUser().getRole())
-                .isSignup(findOrCreateResponse.getIsSignUp())
-                .build();
-    }
 }
