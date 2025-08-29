@@ -12,10 +12,6 @@ public interface DuplicatedComplimentRepository extends JpaRepository<Duplicated
 
     boolean existsByUserIdAndComplimentId(Long userId, Long complimentId);
 
-    Page<DuplicatedCompliment> findByUserIdAndIsReadFalseOrderByIdDesc(Long userId, Pageable pageable);
-
-    long countByUserIdAndIsReadFalse(Long userId);
-
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update DuplicatedCompliment d set d.isRead = true where d.user.id = :userId and d.isRead = false")
     int markAllAsRead(@Param("userId") Long userId);

@@ -11,5 +11,4 @@ public interface TypeComplimentRepository extends JpaRepository<TypeCompliment, 
 
     Optional<TypeCompliment> findByName(String name);
 
-    boolean existsByName(String name);
 }
