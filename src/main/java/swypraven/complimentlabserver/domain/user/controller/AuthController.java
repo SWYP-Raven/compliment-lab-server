@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import swypraven.complimentlabserver.domain.user.model.request.AppleLoginRequest;
 import swypraven.complimentlabserver.domain.user.model.request.TokenRefreshRequest;
@@ -13,7 +12,6 @@ import swypraven.complimentlabserver.domain.user.model.response.AppleAuthRespons
 import swypraven.complimentlabserver.domain.user.service.AppleAuthService;
 import swypraven.complimentlabserver.domain.user.service.TokenRefreshService;
 import swypraven.complimentlabserver.global.auth.jwt.JwtToken;
-import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
 import swypraven.complimentlabserver.global.response.ApiResponse;
 
 import java.text.ParseException;
@@ -34,13 +32,6 @@ public class AuthController {
     ) throws ParseException {
         AppleAuthResponse response = appleAuthService.appleLogin(request.identityToken());
         return ResponseEntity.ok(ApiResponse.of(true, response, "애플 로그인 성공"));
-    }
-
-    @PostMapping("/nickname")
-    public ResponseEntity<?> appleLogin(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        System.out.println(userDetails.getId());
-        appleAuthService.setNickname();
-        return ResponseEntity.ok(null);
     }
 
 

@@ -8,8 +8,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.model.dto.FindOrCreateAppleUserDto;
+import swypraven.complimentlabserver.domain.user.model.request.NicknameRequest;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
 import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
+import swypraven.complimentlabserver.global.exception.user.UserErrorCode;
+import swypraven.complimentlabserver.global.exception.user.UserException;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +24,7 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
-  
+
     /**
      * Apple sub(고유 ID) 기준으로 조회하고 없으면 생성
      * email은 첫 로그인에만 제공될 수 있으니 null 허용, 업데이트 가능하게 처리
@@ -70,4 +73,12 @@ public class UserService implements UserDetailsService {
         List<SimpleGrantedAuthority> auth = List.of(new SimpleGrantedAuthority(role));
         return new CustomUserDetails(user, auth);
     }
+
+
+    public void setNickname(CustomUserDetails customUserDetails, NicknameRequest request) {
+        User user = userRepository.findById(customUserDetails.getId()).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        System.out.println(request.nickname());
+        user.setNickname(request.nickname());
+    }
+
 }

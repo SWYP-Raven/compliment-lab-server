@@ -36,10 +36,6 @@ public class AppleAuthService {
 
     }
 
-    public void setNickname() {
-
-    }
-
     private JwtToken issue(User user) {
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 user.getAppleSub(),

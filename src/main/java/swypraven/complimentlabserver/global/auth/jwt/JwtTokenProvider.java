@@ -13,6 +13,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
+import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
 import swypraven.complimentlabserver.global.exception.auth.AuthErrorCode;
 import swypraven.complimentlabserver.global.exception.auth.AuthException;
 
@@ -130,33 +131,40 @@ public class JwtTokenProvider {
         // 권한
         String auth = Optional.ofNullable(c.get("auth")).map(Object::toString).orElse("");
         String role = Optional.ofNullable(c.get("role")).map(Object::toString).orElse("");
+
         List<SimpleGrantedAuthority> authorities =
                 !auth.isBlank()
                         ? Arrays.stream(auth.split(","))
-                        .map(String::trim).filter(s -> !s.isEmpty())
-                        .map(SimpleGrantedAuthority::new).toList()
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .map(SimpleGrantedAuthority::new)
+                        .toList()
                         : (role.isBlank() ? List.of() : List.of(new SimpleGrantedAuthority(role)));
 
         if (authorities.isEmpty()) {
             throw new AuthException(AuthErrorCode.JWT_TOKEN_INVALID);
         }
 
-        // userId 추출(우선순위: userId -> uid(호환) -> subject Long)
-        Long userId = extractLong(c, "userId");
-        if (userId == null) userId = extractLong(c, "uid");
-        if (userId == null) {
-            try { userId = Long.valueOf(c.getSubject()); }
-            catch (Exception e) {
-                throw new AuthException(AuthErrorCode.TOKEN_INVALID);
-            }
+        // userId 안전하게 추출
+        Object uidObj = c.get("userId"); // JWT에 들어있는 값
+        Long userId = null;
+        if (uidObj instanceof Number n) {
+            userId = n.longValue();
+        } else if (uidObj instanceof String s) {
+            try { userId = Long.valueOf(s); } catch (NumberFormatException ignored) {}
         }
 
-        String subject = c.getSubject(); // appleSub 등 외부 식별자 보관용
-        String finalRole = !role.isBlank() ? role : authorities.get(0).getAuthority();
+        if (userId == null) throw new AuthException(AuthErrorCode.TOKEN_INVALID);
 
-        var principal = new CustomUserPrincipal(userId, subject, finalRole);
-        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+        String appleSub = c.getSubject(); // username 용도
+        String email = Optional.ofNullable(c.get("email")).map(Object::toString).orElse("");
+
+        // CustomUserDetails 생성
+        CustomUserDetails userDetails = new CustomUserDetails(userId, appleSub, email, authorities);
+
+        return new UsernamePasswordAuthenticationToken(userDetails, token, authorities);
     }
+
 
     private Long extractLong(Claims c, String key) {
         Object v = c.get(key);
