@@ -30,7 +30,6 @@ public class AppleAuthService {
         String email = claims.getStringClaim("email"); // null 가능
 
         FindOrCreateAppleUserDto findOrCreateResponse = userService.findOrCreateByAppleSub(sub, email);
-
         JwtToken token = issue(findOrCreateResponse.getUser());
 
 
