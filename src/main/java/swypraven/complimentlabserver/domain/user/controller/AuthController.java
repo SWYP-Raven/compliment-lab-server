@@ -5,14 +5,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import swypraven.complimentlabserver.domain.user.model.request.AppleLoginRequest;
-import swypraven.complimentlabserver.domain.user.model.request.AppleSignupRequest;
 import swypraven.complimentlabserver.domain.user.model.request.TokenRefreshRequest;
-import swypraven.complimentlabserver.domain.user.model.response.AppleLoginResponse;
+import swypraven.complimentlabserver.domain.user.model.response.AppleAuthResponse;
 import swypraven.complimentlabserver.domain.user.service.AppleAuthService;
 import swypraven.complimentlabserver.domain.user.service.TokenRefreshService;
 import swypraven.complimentlabserver.global.auth.jwt.JwtToken;
+import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
 import swypraven.complimentlabserver.global.response.ApiResponse;
 
 import java.text.ParseException;
@@ -26,23 +27,22 @@ public class AuthController {
     private final AppleAuthService appleAuthService;
     private final TokenRefreshService tokenRefreshService;
 
-    @PostMapping(value = "/apple/login", consumes = "application/json", produces = "application/json")
+    @PostMapping(value = "/apple", consumes = "application/json", produces = "application/json")
     @Operation(summary = "애플 로그인", description = "가입된 사용자만 로그인 및 토큰 발급")
-    public ResponseEntity<ApiResponse<AppleLoginResponse>> appleLogin(
+    public ResponseEntity<ApiResponse<AppleAuthResponse>> appleLogin(
             @Valid @RequestBody AppleLoginRequest request
     ) throws ParseException {
-        AppleLoginResponse response = appleAuthService.appleLogin(request.identityToken());
+        AppleAuthResponse response = appleAuthService.appleLogin(request.identityToken());
         return ResponseEntity.ok(ApiResponse.of(true, response, "애플 로그인 성공"));
     }
 
-    @PostMapping(value = "/apple/signup", consumes = "application/json", produces = "application/json")
-    @Operation(summary = "애플 회원가입", description = "닉네임을 포함해 신규 사용자 생성 후 토큰 발급")
-    public ResponseEntity<ApiResponse<AppleLoginResponse>> appleSignup(
-            @Valid @RequestBody AppleSignupRequest request
-    ) throws ParseException {
-        AppleLoginResponse response = appleAuthService.appleSignup(request.identityToken(), request.nickname());
-        return ResponseEntity.ok(ApiResponse.of(true, response, "애플 회원가입 성공"));
+    @PostMapping("/nickname")
+    public ResponseEntity<?> appleLogin(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        System.out.println(userDetails.getId());
+        appleAuthService.setNickname();
+        return ResponseEntity.ok(null);
     }
+
 
     @PostMapping(value = "/token/refresh", consumes = "application/json", produces = "application/json")
     @Operation(summary = "토큰 갱신", description = "Refresh Token으로 Access/Refresh 재발급")

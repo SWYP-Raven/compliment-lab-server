@@ -29,8 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // 문자열 기반 화이트리스트 (와일드카드 포함 가능)
     private static final List<String> EXCLUDED_PATHS = Arrays.asList(
-            "/auth/apple/login",
-            "/auth/apple/signup",
+            "/auth/apple",
             "/auth/token/refresh",
             "/actuator/",
             "/swagger-ui/",

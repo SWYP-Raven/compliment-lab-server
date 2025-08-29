@@ -1,4 +1,7 @@
 package swypraven.complimentlabserver.domain.user.model.request;
+
+import jakarta.validation.constraints.NotBlank;
+
 public record AppleLoginRequest(
-        @jakarta.validation.constraints.NotBlank String identityToken
+        @NotBlank String identityToken
 ) {}

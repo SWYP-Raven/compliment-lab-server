@@ -7,11 +7,11 @@ import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import swypraven.complimentlabserver.domain.user.entity.User;
+import swypraven.complimentlabserver.domain.user.model.dto.FindOrCreateAppleUserDto;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
 import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -27,71 +27,23 @@ public class UserService implements UserDetailsService {
      * email은 첫 로그인에만 제공될 수 있으니 null 허용, 업데이트 가능하게 처리
      */
     @Transactional
-    public User findOrCreateByAppleSub(String appleSub, String email) {
-        String sub = normalizeSub(appleSub);
-        String normEmail = normalizeEmail(email);
-
+    public FindOrCreateAppleUserDto findOrCreateByAppleSub(String sub, String email) {
         return userRepository.findByAppleSub(sub)
-                .map(user -> {
-                    if (user.getEmail() == null && normEmail != null) {
-                        user.setEmail(normEmail);
-                    }
-                    if (user.getRole() == null || user.getRole().isBlank()) {
-                        user.setRole("ROLE_USER");
-                    } else if (!user.getRole().startsWith("ROLE_")) {
-                        user.setRole("ROLE_" + user.getRole());
-                    }
-                    return user;
-                })
+                .map(user -> new FindOrCreateAppleUserDto(user, false))
                 .orElseGet(() -> {
-                    User u = new User();
-                    u.setAppleSub(sub);
-                    u.setEmail(normEmail);       // null 가능
-                    u.setRole("ROLE_USER");      // 기본 권한
-                    return userRepository.save(u);
+                    User newUser = userRepository.save(new User(email, sub).setRole("ROLE_USER"));
+                    return new FindOrCreateAppleUserDto(newUser, true);
                 });
     }
 
-    public Optional<User> findByAppleSubOptional(String appleSub) {
-        return userRepository.findByAppleSub(normalizeSub(appleSub));
-    }
-
-    public boolean existsByAppleSub(String appleSub) {
-        return userRepository.existsByAppleSub(normalizeSub(appleSub));
-    }
-
-    @Transactional
-    public User createUserWithApple(String appleSub, String email, String nickname) {
-        String sub = normalizeSub(appleSub);
-        String normEmail = normalizeEmail(email);
-        if (existsByAppleSub(sub)) {
-            throw new IllegalStateException("이미 가입된 사용자");
-        }
-        User u = new User();
-        u.setAppleSub(sub);
-        u.setEmail(normEmail);        // null 가능
-        u.setNickname(nickname);      // 회원가입 시 필수 (엔티티에서 nullable=false라면 반드시 값 필요)
-        u.setRole("ROLE_USER");
-        return userRepository.save(u);
-    }
-
     public User getByAppleSub(String appleSub) {
-        return userRepository.findByAppleSub(normalizeSub(appleSub))
+        return userRepository.findByAppleSub(appleSub)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found by appleSub: " + appleSub));
     }
 
-    public User getByEmail(String email) {
-        String normEmail = normalizeEmail(email);
-        return userRepository.findByEmail(normEmail)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found by email: " + normEmail));
-    }
 
     public Optional<User> findByRefreshToken(String refreshToken) {
         return userRepository.findByRefreshToken(refreshToken);
-    }
-
-    public Optional<User> findByEmail(String email) {
-        return userRepository.findByEmail(normalizeEmail(email));
     }
 
     /**
@@ -117,13 +69,5 @@ public class UserService implements UserDetailsService {
                 : (user.getRole().startsWith("ROLE_") ? user.getRole() : "ROLE_" + user.getRole());
         List<SimpleGrantedAuthority> auth = List.of(new SimpleGrantedAuthority(role));
         return new CustomUserDetails(user, auth);
-    }
-
-    // ===== util =====
-    private String normalizeSub(String sub) {
-        return sub == null ? null : sub.trim();
-    }
-    private String normalizeEmail(String email) {
-        return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
     }
 }
