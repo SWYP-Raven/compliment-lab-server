@@ -22,7 +22,7 @@ public interface ChatComplimentRepository extends JpaRepository<ChatCompliment, 
     @EntityGraph(attributePaths = {"chat"})
     Page<ChatCompliment> findByUserIdAndCreatedAtLessThanOrderByCreatedAtDesc(Long userId, Instant cursorAt, Pageable pageable);
 
-    /** 카드 검색(옵션): 카드 원문 대화의 message로 LIKE 검색 */
+    /** (기존) 카드 검색: 원문 대화 message 기준 */
     @EntityGraph(attributePaths = {"chat"})
     @Query("""
            select cc
@@ -35,4 +35,21 @@ public interface ChatComplimentRepository extends JpaRepository<ChatCompliment, 
     Page<ChatCompliment> searchByUserAndChatMessage(@Param("userId") Long userId,
                                                     @Param("q") String q,
                                                     Pageable pageable);
+
+    /** (신규 권장) 카드 검색: title/content 기준 */
+    @EntityGraph(attributePaths = {"chat"})
+    @Query("""
+           select cc
+           from ChatCompliment cc
+           where cc.user.id = :userId
+             and (
+                 :q is null or :q = ''
+                 or lower(coalesce(cc.title, '')) like lower(concat('%', :q, '%'))
+                 or lower(coalesce(cc.content, '')) like lower(concat('%', :q, '%'))
+             )
+           order by cc.createdAt desc
+           """)
+    Page<ChatCompliment> searchByUserAndKeyword(@Param("userId") Long userId,
+                                                @Param("q") String q,
+                                                Pageable pageable);
 }

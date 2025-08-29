@@ -24,12 +24,12 @@ public class ArchiveDtos {
     @AllArgsConstructor
     @Builder
     public static class ChatCardArchiveItem {
-        private Long id;              // chat_compliment.id
-        private Long chatId;          // chat.id
-        private String imageUrl;
-        private String thumbUrl;      // nullable
-        private Map<String, Object> payload; // nullable
-        private String chatMessage;   // 미리보기용
+        private Long id;
+        private Long chatId;
+        private String title;            // ✅ 추가
+        private String content;
+        private Map<String,Object> meta;
+        private String chatMessage;
         private Instant createdAt;
     }
 }

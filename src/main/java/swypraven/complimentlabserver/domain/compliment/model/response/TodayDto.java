@@ -1,13 +1,25 @@
 package swypraven.complimentlabserver.domain.compliment.model.response;
 
+import lombok.Builder;
+import lombok.Getter;
 import swypraven.complimentlabserver.domain.compliment.entity.TodayCompliment;
 
-import java.time.ZoneId;
+import java.time.Instant;
 
-public record TodayDto(Long id, String text, String date) {
-    public static TodayDto from(TodayCompliment e) {
-        var kst = ZoneId.of("Asia/Seoul");
-        String date = e.getCreatedAt() == null ? null : e.getCreatedAt().atZone(kst).toLocalDate().toString();
-        return new TodayDto(e.getId(), e.getMessage(), date);
+@Getter
+@Builder
+public class TodayDto {
+    private final Long id;
+    private final Long typeId;
+    private final String message;
+    private final Instant createdAt;
+
+    public static TodayDto from(TodayCompliment tc) {
+        return TodayDto.builder()
+                .id(tc.getId())
+                .typeId(tc.getType() != null ? tc.getType().getId() : null)
+                .message(tc.getMessage())            // <-- text -> message
+                .createdAt(tc.getCreatedAt())        // <-- date -> createdAt(Instant)
+                .build();
     }
 }

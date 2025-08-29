@@ -3,16 +3,14 @@ package swypraven.complimentlabserver.domain.compliment.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import swypraven.complimentlabserver.domain.compliment.entity.SavedTodayCompliment;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface SavedTodayComplimentRepository extends JpaRepository<SavedTodayCompliment, Long> {
-
 
     boolean existsByUserIdAndTodayComplimentId(Long userId, Long todayId);
 
@@ -28,6 +26,19 @@ public interface SavedTodayComplimentRepository extends JpaRepository<SavedToday
     Page<SavedTodayCompliment> findByUserIdAndCreatedAtLessThanOrderByCreatedAtDesc(
             Long userId, Instant cursorAt, Pageable pageable);
 
-    Optional<SavedTodayCompliment> findByUserIdAndTodayComplimentId(Long userId, Long todayId);
+    @EntityGraph(attributePaths = {"todayCompliment", "todayCompliment.type"})
+    @Query("""
+    select s
+    from SavedTodayCompliment s
+    join s.todayCompliment t
+    where s.user.id = :userId
+      and (:fromStart is null or t.createdAt >= :fromStart)
+      and t.createdAt < :toEndExclusive
+    order by s.createdAt desc
+""")
+    Page<SavedTodayCompliment> findHistory(@Param("userId") Long userId,
+                                           @Param("fromStart") Instant fromStart,
+                                           @Param("toEndExclusive") Instant toEndExclusive,
+                                           Pageable pageable);
 
 }
