@@ -13,23 +13,23 @@ public class ArchiveDtos {
     @AllArgsConstructor
     @Builder
     public static class TodayArchiveItem {
-        private Long id;              // saved_today_compliment.id
-        private Long todayId;         // today_compliment.id
-        private Long typeId;          // type_compliment.id
-        private String message;       // today_compliment.message
-        private Instant createdAt;
+        private final Long id;           // saved_today_compliment.id
+        private final Long todayId;      // today_compliment.id
+        private final Long typeId;       // today_compliment.type_id
+        private final String message;    // today_compliment.message
+        private final Instant createdAt; // saved_today_compliment.created_at
     }
 
     @Getter
     @AllArgsConstructor
     @Builder
     public static class ChatCardArchiveItem {
-        private Long id;
-        private Long chatId;
-        private String title;            // ✅ 추가
-        private String content;
-        private Map<String,Object> meta;
-        private String chatMessage;
-        private Instant createdAt;
+        private final Long id;                 // chat_compliment.id
+        private final Long chatId;             // chat.id (원문 대화)
+        private final String title;            // 카드 제목(선택)
+        private final String content;          // 카드 본문 텍스트(필수)
+        private final Map<String, Object> meta;// 렌더 옵션(JSON)
+        private final String chatMessage;      // 원문 대화 내용(chat.message)
+        private final Instant createdAt;       // chat_compliment.created_at
     }
 }

@@ -36,6 +36,18 @@ public class ComplimentService {
         return TodayDto.from(tc);
     }
 
+    /** 선택: 없으면 null 반환하고 호출부에서 처리하고 싶다면 */
+    @Transactional(readOnly = true)
+    public TodayDto getTodayOrNull() {
+        LocalDate today = LocalDate.now(KST);
+        Instant start = today.atStartOfDay(KST).toInstant();
+        Instant end   = today.plusDays(1).atStartOfDay(KST).toInstant();
+
+        return todayRepo.findTopByCreatedAtBetweenOrderByCreatedAtDesc(start, end)
+                .map(TodayDto::from)
+                .orElse(null);
+    }
+
     // 커스텀 예외 (원한다면 공용 예외 패키지로 이동)
     public static class TodayNotFoundException extends RuntimeException {
         public TodayNotFoundException(String message) { super(message); }

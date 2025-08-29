@@ -15,17 +15,15 @@ import swypraven.complimentlabserver.global.response.PageResponse;
 
 import java.time.LocalDate;
 
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/archive")
 public class ArchiveController {
 
     private final ArchiveService archiveService;
-    //사용자가 "오늘의 칭찬"을 내 아카이브에 저장하거나, 내가 저장한 칭찬들을 조회/삭제
-    //DTO:todayArchiveItem
+
     // ===== 오늘의 칭찬 =====
-    @PostMapping("/today") //저장
+    @PostMapping("/today")
     public ResponseEntity<TodayArchiveItem> saveToday(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @Valid @RequestBody SaveTodayRequest req) {
@@ -33,7 +31,7 @@ public class ArchiveController {
         return ResponseEntity.ok(saved);
     }
 
-    @GetMapping("/today") //목록
+    @GetMapping("/today")
     public ResponseEntity<PageResponse<TodayArchiveItem>> listToday(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @RequestParam(defaultValue = "0") int page,
@@ -43,7 +41,7 @@ public class ArchiveController {
         return ResponseEntity.ok(PageResponse.from(result));
     }
 
-    @DeleteMapping("/today/{id}") //삭제
+    @DeleteMapping("/today/{id}")
     public ResponseEntity<Void> deleteToday(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @PathVariable Long id) {
@@ -51,8 +49,8 @@ public class ArchiveController {
         return ResponseEntity.noContent().build();
     }
 
-    // 과거+오늘 조회(미래 제외)
-    @GetMapping("/today/history")  //목록 조회
+    // ✅ 과거+오늘 조회(미래 제외) — Optional 제거, Page로 교정
+    @GetMapping("/today/history")
     public ResponseEntity<PageResponse<TodayArchiveItem>> listTodayHistory(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @RequestParam(required = false) Long userId,
@@ -66,16 +64,14 @@ public class ArchiveController {
 
         LocalDate toOrToday = (to != null ? to : LocalDate.now()); // 오늘 포함, 미래 제외
 
-        //Page<TodayArchiveItem> result
         Page<TodayArchiveItem> result = archiveService.listTodayByUser(
                 targetUserId, from, toOrToday, pageable
         );
         return ResponseEntity.ok(PageResponse.from(result));
     }
 
-
     // ===== 대화 카드 =====
-    @PostMapping("/chat-cards") /// 대화 카드 저장
+    @PostMapping("/chat-cards")
     public ResponseEntity<ChatCardArchiveItem> saveChatCard(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @Valid @RequestBody SaveChatCardRequest req) {
@@ -85,7 +81,7 @@ public class ArchiveController {
         return ResponseEntity.ok(saved);
     }
 
-    @GetMapping("/chat-cards") //대화 목록
+    @GetMapping("/chat-cards")
     public ResponseEntity<PageResponse<ChatCardArchiveItem>> listChatCards(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @RequestParam(required = false) String q,
@@ -96,7 +92,7 @@ public class ArchiveController {
         return ResponseEntity.ok(PageResponse.from(result));
     }
 
-    @DeleteMapping("/chat-cards/{id}") //대화 삭제
+    @DeleteMapping("/chat-cards/{id}")
     public ResponseEntity<Void> deleteChatCard(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @PathVariable Long id) {

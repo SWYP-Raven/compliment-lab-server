@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -53,15 +54,19 @@ public class ArchiveServiceImpl implements ArchiveService {
                 .user(user)
                 .todayCompliment(today)
                 .build();
+
         saved = savedTodayRepo.save(saved);
         return mapToday(saved);
     }
 
+    // ArchiveServiceImpl.java (일부만)
     @Override
     public Page<TodayArchiveItem> listToday(Long userId, Pageable pageable) {
-        return savedTodayRepo.findByUserIdOrderByCreatedAtDesc(userId, pageable)
+        return savedTodayRepo
+                .findByUserIdOrderByCreatedAtDesc(userId, pageable)
                 .map(this::mapToday);
     }
+
 
     @Override
     @Transactional
@@ -80,6 +85,11 @@ public class ArchiveServiceImpl implements ArchiveService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         Chat chat = chatRepo.findById(chatId)
                 .orElseThrow(() -> new IllegalArgumentException("Chat not found"));
+
+        // (선택) 소유권 검사: 내 friend의 chat만 허용
+        if (!chat.getFriend().getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("You cannot archive someone else's chat.");
+        }
 
         ChatCompliment entity = ChatCompliment.of(user, chat, title, content, meta);
         entity = chatComplimentRepo.save(entity);
@@ -108,15 +118,22 @@ public class ArchiveServiceImpl implements ArchiveService {
     // ===== 유저별 과거~오늘 조회(미래 제외, 오늘 포함) =====
     @Override
     public Page<TodayArchiveItem> listTodayByUser(Long targetUserId, LocalDate from, LocalDate toOrToday, Pageable pageable) {
-        LocalDate upperDate = (toOrToday != null) ? toOrToday : LocalDate.now(KST); // 오늘 포함
-        Instant fromStart = (from != null) ? from.atStartOfDay(KST).toInstant() : null; // null이면 제한 없음
-        Instant toEndExclusive = upperDate.plusDays(1).atStartOfDay(KST).toInstant();  // 내일 0시(배타)
+        LocalDate upper = (toOrToday != null) ? toOrToday : LocalDate.now(KST); // 오늘 포함
+        Instant startInclusive = (from != null) ? from.atStartOfDay(KST).toInstant() : Instant.EPOCH;
+        Instant endInclusive = upper.plusDays(1).atStartOfDay(KST).toInstant().minusMillis(1);
 
-        return savedTodayRepo.findHistory(targetUserId, fromStart, toEndExclusive, pageable)
+        // Repository 쿼리는 아래 시그니처 중 하나가 필요합니다.
+        // 1) 메서드 이름 기반:
+        // Page<SavedTodayCompliment> findByUserIdAndCreatedAtBetweenOrderByCreatedAtDesc(Long userId, Instant start, Instant end, Pageable p);
+        //
+        // 2) 또는 @Query 기반 findHistory(userId, start, end, pageable)
+
+        return savedTodayRepo
+                .findByUserIdAndCreatedAtBetweenOrderByCreatedAtDesc(targetUserId, startInclusive, endInclusive, pageable)
                 .map(this::mapToday);
     }
 
-    // ===== mapper =====
+    // ===== mappers =====
     private TodayArchiveItem mapToday(SavedTodayCompliment e) {
         return TodayArchiveItem.builder()
                 .id(e.getId())
@@ -131,12 +148,11 @@ public class ArchiveServiceImpl implements ArchiveService {
         return ChatCardArchiveItem.builder()
                 .id(e.getId())
                 .chatId(e.getChat().getId())
-                .title(e.getTitle())          // ✅ 엔티티 → DTO
-                .content(e.getContent())      // ✅ 엔티티 → DTO
-                .meta(e.getMeta())            // ✅ 엔티티 → DTO
+                .title(e.getTitle())
+                .content(e.getContent())
+                .meta(e.getMeta())
                 .chatMessage(e.getChat().getMessage())
                 .createdAt(e.getCreatedAt())
                 .build();
     }
-
 }

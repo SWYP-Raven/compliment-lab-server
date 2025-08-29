@@ -20,7 +20,7 @@ public class ChatResponse {
 
     public ChatResponse(ChatCompliment chatCompliment) {
         this.id = chatCompliment.getChat().getId();
-        this.time = chatCompliment.getCreatedAt();
+        this.time = LocalDateTime.from(chatCompliment.getCreatedAt());
         this.message = chatCompliment.getChat().getMessage();
         this.name = chatCompliment.getChat().getFriend().getName();
         this.role = chatCompliment.getChat().getRole();

@@ -27,14 +27,14 @@ public enum AuthErrorCode implements ErrorCode {
     REFRESH_TOKEN_INVALID("AUTH_012", "유효하지 않은 Refresh Token입니다.", HttpStatus.UNAUTHORIZED),
     REFRESH_TOKEN_EXPIRED("AUTH_013", "Refresh Token이 만료되었습니다.", HttpStatus.UNAUTHORIZED),
 
-    // 범용(외부 라이브러리 예외 매핑 등)
+    // 범용
     TOKEN_INVALID("AUTH_014", "토큰 파싱/검증에 실패했습니다.", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED("AUTH_015", "인증이 필요합니다.", HttpStatus.UNAUTHORIZED),
     INTERNAL_ERROR("AUTH_999", "내부 인증 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
+    // 사용자 관련
     EXIST_USER("AUTH_016", "이미 가입된 회원입니다.", HttpStatus.BAD_REQUEST),
-    NONE_EXIST_USER("AUTH_17", "가입되지 않은 회원입니다.", HttpStatus.UNAUTHORIZED),
-    ;
+    NONE_EXIST_USER("AUTH_017", "가입되지 않은 회원입니다.", HttpStatus.UNAUTHORIZED);
 
     private final String code;
     private final String message;

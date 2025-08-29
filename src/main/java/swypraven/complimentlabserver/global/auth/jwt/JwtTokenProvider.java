@@ -11,7 +11,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
-import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
 import jakarta.annotation.PostConstruct;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
@@ -86,9 +85,6 @@ public class JwtTokenProvider {
         final long now = System.currentTimeMillis();
         final String subject = Optional.ofNullable(authentication.getName()).orElse("");
 
-        final long now = System.currentTimeMillis();
-        final String subject = Optional.ofNullable(authentication != null ? authentication.getName() : null).orElse("");
-
         // 권한 문자열 (예: "ROLE_USER,ROLE_ADMIN")
         final String authString = authentication != null
                 ? authentication.getAuthorities().stream()
@@ -148,7 +144,7 @@ public class JwtTokenProvider {
      *  - userId 우선, 없으면 uid(구토큰 호환), 그래도 없으면 subject를 Long으로 시도
      *  - principal: CustomUserPrincipal(userId, subject, role)
      * ------------------------------------------------------------------ */
-    public UsernamePasswordAuthenticationToken getAuthentication(String token) {
+    public UsernamePasswordAuthenticationToken getAuthentication(String token) throws InvalidJwtTokenException {
         Claims c = parseClaims(token);
 
         // 권한
@@ -162,7 +158,7 @@ public class JwtTokenProvider {
                         : (role.isBlank() ? List.of() : List.of(new SimpleGrantedAuthority(role)));
 
         if (authorities.isEmpty()) {
-            throw new LoginFailedException.InvalidJwtTokenException("권한 정보가 없는 토큰입니다.");
+            throw new InvalidJwtTokenException("권한 정보가 없는 토큰입니다.");
         }
 
         // userId 추출(우선순위: userId -> uid(호환) -> subject Long)
@@ -170,7 +166,7 @@ public class JwtTokenProvider {
         if (userId == null) userId = extractLong(c, "uid");
         if (userId == null) {
             try { userId = Long.valueOf(c.getSubject()); }
-            catch (Exception e) { throw new LoginFailedException.InvalidJwtTokenException("userId 클레임 없음"); }
+            catch (Exception e) { throw new InvalidJwtTokenException("userId 클레임 없음"); }
         }
 
         String subject = c.getSubject(); // appleSub 등 외부 식별자 보관용
@@ -224,5 +220,10 @@ public class JwtTokenProvider {
 
     public boolean isRefreshToken(String refreshToken) {
         return "refresh".equals(parseClaims(refreshToken).get("typ", String.class));
+    }
+
+    private class InvalidJwtTokenException extends Throwable {
+        public InvalidJwtTokenException(String s) {
+        }
     }
 }

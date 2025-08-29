@@ -73,13 +73,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // 2-2) 토큰이 있는데 유효하지 않으면 예외 → EntryPoint로 위임 (401)
             if (!jwtTokenProvider.validateToken(token)) {
-                throw new LoginFailedException.InvalidJwtTokenException("Invalid or expired token");
+                throw new InvalidJwtTokenException("Invalid or expired token");
             }
 
         } catch (Exception e) {
             log.warn("JWT 처리 중 예외 발생: {}", e.getMessage());
             // response.write 대신 예외를 던져서 EntryPoint로 위임
             throw new AuthException(AuthErrorCode.TOKEN_INVALID);
+        } catch (InvalidJwtTokenException e) {
+            throw new RuntimeException(e);
         }
 
         filterChain.doFilter(request, response);
@@ -98,5 +100,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return token.isEmpty() ? null : token;
         }
         return null;
+    }
+
+    private class InvalidJwtTokenException extends Throwable {
+        public InvalidJwtTokenException(String invalidOrExpiredToken) {
+        }
     }
 }
