@@ -4,6 +4,7 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 @Component
 public class JwtTokenProvider {
 
+    @Getter
     private final UserRepository userRepository;
     private Key key;
 
@@ -205,9 +207,6 @@ public class JwtTokenProvider {
         }
     }
 
-    public String getUsernameFromToken(String token) {
-        return parseClaims(token).getSubject();
-    }
 
     public Date getExpirationDateFromToken(String token) {
         return parseClaims(token).getExpiration();

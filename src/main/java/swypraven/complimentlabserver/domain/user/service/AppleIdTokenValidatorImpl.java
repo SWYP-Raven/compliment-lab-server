@@ -45,11 +45,11 @@ public class AppleIdTokenValidatorImpl implements AppleIdTokenValidator {
             if (aud == null || !aud.contains(appleClientId)) {
                 throw new AuthException(AuthErrorCode.JWT_SIGNATURE_INVALID);
             }
-            //만료 시간 검증
-//            Date exp = claims.getExpirationTime();
-//            if (exp == null || new Date(System.currentTimeMillis() - CLOCK_SKEW_MS).after(exp)) {
-//                throw new AuthException(AuthErrorCode.JWT_TOKEN_EXPIRED);
-//            }
+           // 만료 시간 검증
+            Date exp = claims.getExpirationTime();
+            if (exp == null || new Date(System.currentTimeMillis() - CLOCK_SKEW_MS).after(exp)) {
+                throw new AuthException(AuthErrorCode.JWT_TOKEN_EXPIRED);
+            }
 
             return claims;
         } catch (AuthException e) {
