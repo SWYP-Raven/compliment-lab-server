@@ -8,9 +8,10 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import swypraven.complimentlabserver.domain.user.entity.User;
-import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
 import swypraven.complimentlabserver.global.auth.jwt.JwtToken;
 import swypraven.complimentlabserver.global.auth.jwt.JwtTokenProvider;
+import swypraven.complimentlabserver.global.exception.auth.AuthErrorCode;
+import swypraven.complimentlabserver.global.exception.auth.AuthException;
 
 import java.util.List;
 
@@ -28,11 +29,11 @@ public class TokenRefreshService {
 
         // 선택: typ=refresh 확인
         if (!jwtTokenProvider.isRefreshToken(refreshToken)) {
-            throw new LoginFailedException.InvalidJwtTokenException("Refresh Token이 아닙니다.");
+            throw new AuthException(AuthErrorCode.REFRESH_TOKEN_INVALID);
         }
 
         User user = userService.findByRefreshToken(refreshToken)
-                .orElseThrow(() -> new LoginFailedException.InvalidJwtTokenException("존재하지 않는 Refresh Token입니다."));
+                .orElseThrow(() -> new AuthException(AuthErrorCode.REFRESH_TOKEN_NOT_FOUND));
 
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 user.getEmail(), // 가능하면 appleSub 또는 userId로 바꾸는 게 안전

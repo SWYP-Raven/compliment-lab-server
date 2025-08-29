@@ -10,6 +10,7 @@ import swypraven.complimentlabserver.domain.user.entity.User;
 import java.time.Instant;
 import java.util.Map;
 
+// 카드 아카이브: 이미지 기반
 @Getter
 @Setter
 @EqualsAndHashCode(of = "id")
@@ -40,18 +41,18 @@ public class ChatCompliment {
     @JoinColumn(name = "user_id")
     private User user;
 
-    /** 카드 제목(선택) */
-    @Column(name = "title", length = 200)
-    private String title;
+    /** 공개 URL (S3 등) */
+    @Column(name = "image_url", nullable = false, length = 512)
+    private String imageUrl;
 
-    /** 카드 본문 텍스트(필수) */
-    @Column(name = "content", nullable = false, columnDefinition = "text")
-    private String content;
+    /** 썸네일(옵션) */
+    @Column(name = "thumb_url", length = 512)
+    private String thumbUrl;
 
-    /** 렌더링 옵션(폰트/컬러/정렬 등) */
+    /** 렌더링 옵션(폰트/컬러/캔버스 크기 등) */
     @JdbcTypeCode(SqlTypes.JSON) // Hibernate 6 + MySQL 8 JSON 컬럼
-    @Column(name = "meta_json", columnDefinition = "json")
-    private Map<String, Object> meta;
+    @Column(name = "payload", columnDefinition = "json")
+    private Map<String, Object> payload;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -61,14 +62,14 @@ public class ChatCompliment {
         if (createdAt == null) createdAt = Instant.now();
     }
 
-    /** 팩토리 메서드 (텍스트 중심) */
-    public static ChatCompliment of(User user, Chat chat, String title, String content, Map<String, Object> meta) {
+    // 원하면 빌더 대신 사용 가능한 팩토리 메서드
+    public static ChatCompliment of(User user, Chat chat, String imageUrl, String thumbUrl, Map<String, Object> payload) {
         return ChatCompliment.builder()
                 .user(user)
                 .chat(chat)
-                .title(title)
-                .content(content)
-                .meta(meta)
+                .imageUrl(imageUrl)
+                .thumbUrl(thumbUrl)
+                .payload(payload)
                 .build();
     }
 }

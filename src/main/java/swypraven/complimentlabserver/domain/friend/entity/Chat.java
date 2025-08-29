@@ -3,10 +3,16 @@ package swypraven.complimentlabserver.domain.friend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.Instant;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
+import java.time.LocalDateTime;
 
-@Getter @Setter
+@Getter 
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor @Builder
+@AllArgsConstructor 
+@Builder
 @EqualsAndHashCode(of = "id")
 @Entity
 @Table(
@@ -16,7 +22,14 @@ import java.time.Instant;
                 @Index(name = "ix_chat_friend_created", columnList = "friend_id, created_at")
         }
 )
+@EntityListeners(AuditingEntityListener.class)
 public class Chat {
+  
+    public Chat(String chat, RoleType role, Friend friend) {
+        this.friend = friend;
+        this.message = chat;
+        this.role = role;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,19 +40,20 @@ public class Chat {
     @JoinColumn(name = "friend_id", nullable = false)
     private Friend friend;
 
-    @Column(name = "message", nullable = false, length = 255)
-    private String message;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false, length = 16)
-    private ChatRole role;   // user | system | assistant
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
 
     @PrePersist
     void prePersist() {
         if (createdAt == null) createdAt = Instant.now();
         if (role == null) role = ChatRole.user;
     }
+}
+    @Column(name = "message", length = Integer.MAX_VALUE)
+    private String message;
+
+    @Column(name = "role")
+    private RoleType role;
+
+    @CreatedDate
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 }

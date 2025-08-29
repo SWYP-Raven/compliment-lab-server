@@ -19,7 +19,7 @@ import java.text.ParseException;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/auth")
 @Tag(name = "인증 API", description = "사용자 인증 관련 API")
 public class AuthController {
 

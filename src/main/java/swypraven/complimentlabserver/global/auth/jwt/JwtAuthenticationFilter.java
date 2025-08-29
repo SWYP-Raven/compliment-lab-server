@@ -14,7 +14,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
+import swypraven.complimentlabserver.global.exception.auth.AuthErrorCode;
+import swypraven.complimentlabserver.global.exception.auth.AuthException;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -30,14 +31,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // 문자열 기반 화이트리스트 (와일드카드 포함 가능)
     private static final List<String> EXCLUDED_PATHS = Arrays.asList(
-            "/api/v1/auth/**",
-            "/api/v1/auth/apple/login",
-            "/api/v1/auth/apple/signup",
-            "/api/v1/auth/token/refresh",
-            "/api/v1/compliments/today",
-            "/actuator/**",
-            "/swagger-ui/**",
-            "/v3/api-docs/**",
+            "/auth/apple/login",
+            "/auth/apple/signup",
+            "/auth/token/refresh",
+            "/actuator/",
+            "/swagger-ui/",
+            "/v3/api-docs",
             "/favicon.ico"
     );
 
@@ -77,17 +76,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 throw new LoginFailedException.InvalidJwtTokenException("Invalid or expired token");
             }
 
-            // 3) 토큰 유효 → SecurityContext 저장
-            Authentication authentication = jwtTokenProvider.getAuthentication(token);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            log.debug("[JWT] Auth success: user={}, uri={}", authentication.getName(), uri);
-
-        } catch (LoginFailedException.InvalidJwtTokenException e) {
-            log.warn("[JWT] Invalid token: {}", e.getMessage());
-            throw e; // EntryPoint에서 401 JSON 응답
         } catch (Exception e) {
-            log.error("[JWT] Unexpected error", e);
-            throw new LoginFailedException.InvalidJwtTokenException("JWT processing error");
+            log.warn("JWT 처리 중 예외 발생: {}", e.getMessage());
+            // response.write 대신 예외를 던져서 EntryPoint로 위임
+            throw new AuthException(AuthErrorCode.TOKEN_INVALID);
         }
 
         filterChain.doFilter(request, response);

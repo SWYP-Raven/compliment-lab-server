@@ -12,7 +12,14 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
-
+import jakarta.annotation.PostConstruct;
+import swypraven.complimentlabserver.domain.user.entity.User;
+import swypraven.complimentlabserver.domain.user.repository.UserRepository;
+import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
+import swypraven.complimentlabserver.global.exception.auth.AuthErrorCode;
+import swypraven.complimentlabserver.global.exception.auth.AuthException;
+import swypraven.complimentlabserver.global.exception.user.UserErrorCode;
+import swypraven.complimentlabserver.global.exception.user.UserException;
 import java.security.Key;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -21,6 +28,7 @@ import java.util.stream.Collectors;
 @Component
 public class JwtTokenProvider {
 
+    private final UserRepository userRepository;
     private Key key;
 
     @Value("${jwt.secret.key}")
@@ -31,6 +39,10 @@ public class JwtTokenProvider {
 
     @Value("${jwt.refresh-token.expiry:604800}") // seconds (7d)
     private long refreshTokenExpiry;
+
+    public JwtTokenProvider(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @PostConstruct
     public void init() {
@@ -44,7 +56,7 @@ public class JwtTokenProvider {
             throw new IllegalStateException("JWT Secret Key가 올바르지 않습니다.");
         }
     }
-
+  
     /* ------------------------------------------------------------------
      * 토큰 생성 (단건: 액세스)
      *  - 클레임: userId, role, auth(콤마 구분)
@@ -69,7 +81,10 @@ public class JwtTokenProvider {
      *  - 액세스 토큰 클레임은 위 createAccessToken과 동일하게 userId 사용
      * ------------------------------------------------------------------ */
     public JwtToken generateToken(Authentication authentication,
-                                  swypraven.complimentlabserver.domain.user.entity.User user) {
+                                  User user) {
+
+        final long now = System.currentTimeMillis();
+        final String subject = Optional.ofNullable(authentication.getName()).orElse("");
 
         final long now = System.currentTimeMillis();
         final String subject = Optional.ofNullable(authentication != null ? authentication.getName() : null).orElse("");
@@ -180,7 +195,7 @@ public class JwtTokenProvider {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (JwtException | IllegalArgumentException e) {
-            throw new LoginFailedException.InvalidJwtTokenException("유효하지 않은 JWT 토큰입니다: " + e.getMessage(), e);
+            throw new AuthException(AuthErrorCode.JWT_TOKEN_INVALID);
         }
     }
 
@@ -190,7 +205,7 @@ public class JwtTokenProvider {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
-            throw new LoginFailedException.InvalidJwtTokenException("유효하지 않은 JWT 토큰입니다: " + e.getMessage(), e);
+            throw new AuthException(AuthErrorCode.JWT_TOKEN_INVALID);
         }
     }
 

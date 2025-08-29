@@ -21,6 +21,7 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
+  
     /**
      * Apple sub(고유 ID) 기준으로 조회하고 없으면 생성
      * email은 첫 로그인에만 제공될 수 있으니 null 허용, 업데이트 가능하게 처리

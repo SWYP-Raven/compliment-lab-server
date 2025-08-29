@@ -19,6 +19,9 @@ public class ResponseFriend {
     @JsonProperty("type_id")
     private Long typeId;
 
+    @JsonProperty("last_message")
+    private String lastMessage;
+
     public ResponseFriend(Friend friend) {
         this.id = friend.getId();
         this.name = friend.getName();
@@ -26,4 +29,11 @@ public class ResponseFriend {
         this.typeId = friend.getType().getId();
     }
 
+    public ResponseFriend(Friend friend, String lastMessage) {
+        this.id = friend.getId();
+        this.name = friend.getName();
+        this.typeName =  friend.getType().getName();
+        this.typeId = friend.getType().getId();
+        this.lastMessage = lastMessage;
+    }
 }

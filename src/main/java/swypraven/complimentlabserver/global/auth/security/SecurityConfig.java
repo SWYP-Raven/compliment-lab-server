@@ -55,6 +55,9 @@ public class SecurityConfig {
                                 "/actuator/**",
                                 "/favicon.ico"
                         ).permitAll()
+                        .requestMatchers("/auth/**", "/actuator/**").permitAll()  // 수정
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/favicon.ico").permitAll()
                         .requestMatchers("/user/test").hasRole("USER")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

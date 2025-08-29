@@ -1,17 +1,11 @@
 package swypraven.complimentlabserver.global.exception;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.proc.BadJWSException;
-import com.nimbusds.jwt.proc.BadJWTException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.json.ParseException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import swypraven.complimentlabserver.global.exception.auth.AuthErrorCode;
-import swypraven.complimentlabserver.global.exception.auth.LoginFailedException;
+import swypraven.complimentlabserver.global.exception.auth.AuthException;
 import swypraven.complimentlabserver.global.exception.common.DomainException;
 import swypraven.complimentlabserver.global.exception.common.ErrorCode;
 import swypraven.complimentlabserver.global.exception.friend.FriendException;
@@ -24,7 +18,6 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
     @ExceptionHandler(DomainException.class)
     public ResponseEntity<?> handleDomainException(DomainException ex) {
         ErrorCode code = ex.getErrorCode();
@@ -43,50 +36,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ex.getHttpStatus()).body(ApiResponse.error(ex));
     }
 
+    @ExceptionHandler(AuthException.class)
+    public ResponseEntity<?> handleAppleRule(AuthException e) {
+        log.info("[Auth] : {}", e.getMessage());
+        return ResponseEntity.status(e.getHttpStatus()).body(ApiResponse.error(e));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleException(Exception ex) {
         log.warn(ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value()).body(ex.getMessage());
-    }
-    // 3) 우리가 의도적으로 던진 로그인/토큰 도메인 예외
-    @ExceptionHandler(LoginFailedException.AppleIdTokenValidationException.class)
-    public ResponseEntity<?> handleAppleRule(LoginFailedException.AppleIdTokenValidationException e) {
-        log.info("[APPLE] rule violation : {}", e.getMessage());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ErrorResponse.from(AuthErrorCode.APPLE_TOKEN_INVALID));
-    }
-
-    @ExceptionHandler(LoginFailedException.InvalidJwtTokenException.class)
-    public ResponseEntity<?> handleInvalidJwt(LoginFailedException.InvalidJwtTokenException e) {
-        log.info("[JWT] invalid token : {}", e.getMessage());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ErrorResponse.from(AuthErrorCode.TOKEN_INVALID));
-    }
-
-    @ExceptionHandler(LoginFailedException.JwtAuthException.class)
-    public ResponseEntity<?> handleJwtAuth(LoginFailedException.JwtAuthException e) {
-        log.info("[JWT] auth failed : {}", e.getMessage());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ErrorResponse.from(AuthErrorCode.UNAUTHORIZED));
-    }
-
-    // 4) Nimbus/JWT 파싱·서명 등 외부 예외 → 안전한 코드로 통일
-    @ExceptionHandler({ BadJWTException.class, BadJWSException.class, JOSEException.class, ParseException.class })
-    public ResponseEntity<?> handleJoseAndParse(Exception e) {
-        log.warn("[JWT/NIMBUS] {}", e.getMessage(), e);
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ErrorResponse.from(AuthErrorCode.TOKEN_INVALID)); // 메시지는 마스킹
-    }
-
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException e) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of("code", "DUPLICATE_TODAY", "message", e.getMessage()));
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("code", "BAD_REQUEST", "message", e.getMessage()));
     }
 }
