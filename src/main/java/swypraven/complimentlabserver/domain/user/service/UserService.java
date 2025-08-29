@@ -1,6 +1,7 @@
 // src/main/java/swypraven/complimentlabserver/domain/user/service/UserService.java
 package swypraven.complimentlabserver.domain.user.service;
 
+import com.nimbusds.jwt.JWTClaimsSet;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
@@ -23,7 +24,7 @@ import java.util.Optional;
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
-
+    private final AppleIdTokenValidator appleIdTokenValidator;
 
     /**
      * Apple sub(고유 ID) 기준으로 조회하고 없으면 생성
@@ -32,10 +33,15 @@ public class UserService implements UserDetailsService {
     @Transactional
     public FindOrCreateAppleUserDto findOrCreateByAppleSub(String sub, String email) {
         return userRepository.findByAppleSub(sub)
-                .map(user -> new FindOrCreateAppleUserDto(user, false))
+                .map(user -> {
+                    if(user.getNickname() == null || user.getNickname().isEmpty()) {
+                        return new FindOrCreateAppleUserDto(user, false);
+                    }
+                    return new FindOrCreateAppleUserDto(user, true);
+                })
                 .orElseGet(() -> {
                     User newUser = userRepository.save(new User(email, sub).setRole("ROLE_USER"));
-                    return new FindOrCreateAppleUserDto(newUser, true);
+                    return new FindOrCreateAppleUserDto(newUser, false);
                 });
     }
 
@@ -76,8 +82,10 @@ public class UserService implements UserDetailsService {
 
 
     @Transactional
-    public void setNickname(CustomUserDetails customUserDetails, NicknameRequest request) {
-        User user = userRepository.findById(customUserDetails.getId()).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+    public void setNickname(NicknameRequest request) {
+        JWTClaimsSet claims = appleIdTokenValidator.validate(request.identityToken());
+        String sub = claims.getSubject();
+        User user = userRepository.findByAppleSub(sub).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
         user.setNickname(request.nickname());
     }
 
