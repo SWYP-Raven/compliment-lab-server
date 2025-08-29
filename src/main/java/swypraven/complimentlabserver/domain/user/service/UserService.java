@@ -25,6 +25,7 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final AppleIdTokenValidator appleIdTokenValidator;
+
     /**
      * Apple sub(고유 ID) 기준으로 조회하고 없으면 생성
      * email은 첫 로그인에만 제공될 수 있으니 null 허용, 업데이트 가능하게 처리
@@ -85,7 +86,6 @@ public class UserService implements UserDetailsService {
         JWTClaimsSet claims = appleIdTokenValidator.validate(request.identityToken());
         String email = claims.getClaims().get("email").toString();
         User user = userRepository.findByEmail(email).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
-
         user.setNickname(request.nickname());
     }
 }
