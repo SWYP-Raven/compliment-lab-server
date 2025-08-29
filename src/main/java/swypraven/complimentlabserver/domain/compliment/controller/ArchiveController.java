@@ -17,7 +17,7 @@ import java.time.LocalDate;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/archive")
+@RequestMapping("/archive")
 public class ArchiveController {
 
     private final ArchiveService archiveService;

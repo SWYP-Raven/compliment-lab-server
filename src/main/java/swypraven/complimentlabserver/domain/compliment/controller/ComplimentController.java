@@ -8,7 +8,7 @@ import swypraven.complimentlabserver.domain.compliment.service.ComplimentService
 //오늘의 칭찬 제공
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/compliments")
+@RequestMapping("/compliments")
 //GET /api/v1/compliments/today
 //오늘 날짜에 해당하는 칭찬 문장을 DB(today_compliment)에서 찾아 오늘의 칭찬 원본을 리턴
 // 읽기 전공(오늘의 칭찬 한 문장
