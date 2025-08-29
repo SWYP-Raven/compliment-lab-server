@@ -85,8 +85,8 @@ public class UserService implements UserDetailsService {
     @Transactional
     public void setNickname(NicknameRequest request) {
         JWTClaimsSet claims = appleIdTokenValidator.validate(request.identityToken());
-        String sub = claims.getSubject();
-        User user = userRepository.findByAppleSub(sub).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        String email = claims.getClaims().get("email").toString();
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
         user.setNickname(request.nickname());
     }
 }
