@@ -75,9 +75,9 @@ public class UserService implements UserDetailsService {
     }
 
 
+    @Transactional
     public void setNickname(CustomUserDetails customUserDetails, NicknameRequest request) {
         User user = userRepository.findById(customUserDetails.getId()).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
-        System.out.println(request.nickname());
         user.setNickname(request.nickname());
     }
 
