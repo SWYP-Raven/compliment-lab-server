@@ -4,7 +4,8 @@ package swypraven.complimentlabserver.domain.user.model.response;
 import lombok.Builder;
 
 @Builder
-public record AppleLoginResponse(
+public record AppleAuthResponse(
+        Boolean isSignup,
         String grantType,
         String accessToken,
         String refreshToken,
