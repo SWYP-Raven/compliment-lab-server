@@ -31,7 +31,7 @@ public class AuthController {
             @Valid @RequestBody AppleLoginRequest request
     ) throws ParseException {
         AppleAuthResponse response = appleAuthService.appleLogin(request.identityToken());
-        return ResponseEntity.ok(ApiResponse.of(true, response, "애플 로그인 성공"));
+        return ResponseEntity.ok(ApiResponse.of(true, response, "애플 인증 성공"));
     }
 
 
