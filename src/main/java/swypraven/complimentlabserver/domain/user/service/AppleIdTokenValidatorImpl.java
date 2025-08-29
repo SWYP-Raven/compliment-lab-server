@@ -53,7 +53,8 @@ public class AppleIdTokenValidatorImpl implements AppleIdTokenValidator {
 
             return claims;
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             log.error("Apple ID Token 파싱/검증 실패", e);
             throw new AuthException(AuthErrorCode.APPLE_AUTH_FAILED);
         }

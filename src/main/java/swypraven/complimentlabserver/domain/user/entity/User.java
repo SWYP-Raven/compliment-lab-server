@@ -1,14 +1,15 @@
 package swypraven.complimentlabserver.domain.user.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 @Getter
 @Setter
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "users", // ← 예약어 회피
         indexes = {
                 @Index(name = "idx_users_email", columnList = "email")
@@ -18,12 +19,17 @@ import org.hibernate.type.SqlTypes;
         })
 public class User {
 
+    public User(String email, String appleSub) {
+        this.email = email;
+        this.appleSub = appleSub;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     // 닉네임: 기본값 생성 전략을 쓰지 않는다면 nullable = true 권장
-    @Column(name = "nickname", nullable = false)
+    @Column(name = "nickname")
     private String nickname;
 
     @Column(name = "alarm", nullable = false)
@@ -31,7 +37,7 @@ public class User {
     private Boolean alarm = false;
 
     // 애플은 email이 없을 수 있음 → nullable = true
-    @Column(name = "email", nullable = true, length = 191)
+    @Column(name = "email", length = 191)
     private String email;
 
     // 애플 고유 사용자 ID(고정) - 유니크
@@ -46,4 +52,9 @@ public class User {
     private String refreshToken;
 
     // 필요 시 편의 메서드들…
+
+    public User setRole(String role) {
+        this.role = role;
+        return this;
+    }
 }
