@@ -47,5 +47,4 @@ public class AppleAuthService {
         );
         return jwtTokenProvider.generateToken(authentication, user);
     }
-
 }
