@@ -3,22 +3,19 @@ package swypraven.complimentlabserver.global.auth.jwt;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-
-import jakarta.annotation.PostConstruct;
+import org.springframework.stereotype.Component;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
 import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
 import swypraven.complimentlabserver.global.exception.auth.AuthErrorCode;
 import swypraven.complimentlabserver.global.exception.auth.AuthException;
-import swypraven.complimentlabserver.global.exception.user.UserErrorCode;
-import swypraven.complimentlabserver.global.exception.user.UserException;
 
 import java.security.Key;
 import java.util.*;
@@ -34,7 +31,7 @@ public class JwtTokenProvider {
     @Value("${jwt.secret.key}")
     private String secretKey; // Base64 인코딩된 256bit 이상 키 권장
 
-    @Value("${jwt.access-token.expiry:1800}")   // seconds
+    @Value("${jwt.access-token.expiry:1800}")    // seconds
     private long accessTokenExpiry;
 
     @Value("${jwt.refresh-token.expiry:604800}") // seconds (7d)
@@ -57,37 +54,40 @@ public class JwtTokenProvider {
         }
     }
 
-    /**
-     * Access + Refresh Token 생성
-     * subject는 Authentication.getName() (현재 appleSub) 사용
-     * Access 토큰에는 권한(auth) + 선택 클레임(uid,email,role) 포함
-     */
+
+    /* ------------------------------------------------------------------
+     * 토큰 생성 (액세스 + 리프레시 묶음)
+     *  - generateToken(authentication, user) 기존 시그니처 유지
+     *  - 액세스 토큰 클레임은 위 createAccessToken과 동일하게 userId 사용
+     * ------------------------------------------------------------------ */
     public JwtToken generateToken(Authentication authentication,
                                   User user) {
 
         final long now = System.currentTimeMillis();
-        final String subject = Optional.ofNullable(authentication.getName()).orElse("");
+        final String subject = Optional.ofNullable(authentication != null ? authentication.getName() : null).orElse("");
 
         // 권한 문자열 (예: "ROLE_USER,ROLE_ADMIN")
-        final String authorities = authentication.getAuthorities().stream()
+        final String authString = authentication != null
+                ? authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .filter(s -> s != null && !s.isBlank())
-                .collect(Collectors.joining(","));
+                .collect(Collectors.joining(","))
+                : (user != null && user.getRole() != null ? user.getRole() : "");
 
-        // 선택: 프런트/게이트웨이에서 쓰기 좋은 클레임들
         Map<String, Object> extraClaims = new HashMap<>();
-        extraClaims.put("auth", authorities);
+        if (!authString.isBlank()) extraClaims.put("auth", authString);
+
         if (user != null) {
-            if (user.getId() != null)    extraClaims.put("uid", user.getId());
-            if (user.getEmail() != null) extraClaims.put("email", user.getEmail());
+            if (user.getId() != null)    extraClaims.put("userId", user.getId()); // ✅ uid -> userId
             if (user.getRole() != null)  extraClaims.put("role", user.getRole());
+            if (user.getEmail() != null) extraClaims.put("email", user.getEmail()); // 민감도 고려해 필요시 제거
         }
 
         String accessToken  = buildAccessToken(subject, now, extraClaims);
         String refreshToken = buildRefreshToken(subject, now);
 
-        log.info("JWT 토큰 생성 완료: user={}", subject);
-        log.info("JWT 토큰 생성 완료: accessToken={}, refreshToken={}", accessToken, refreshToken);
+        log.info("JWT 토큰 생성 완료: subject={}, userId={}", subject, extraClaims.get("userId"));
+        // ⚠️ 전체 토큰 문자열은 로그에 남기지 마세요.
 
         return JwtToken.builder()
                 .grantType("Bearer")
@@ -102,9 +102,6 @@ public class JwtTokenProvider {
                 .setIssuedAt(new Date(now))
                 .setExpiration(new Date(now + accessTokenExpiry))
                 .signWith(key, SignatureAlgorithm.HS256);
-
-        // 기본 헤더 typ=JWT는 자동, 필요한 경우 kid 등 추가 가능
-        // builder.setHeaderParam("kid", "your-key-id");
 
         if (claims != null && !claims.isEmpty()) {
             builder.addClaims(claims);
@@ -122,37 +119,58 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    /**
-     * Access 토큰에서 Authentication 생성
-     * - auth 클레임이 없으면 Access 토큰이 아니라고 판단
-     */
+    /* ------------------------------------------------------------------
+     * 인증 객체 복원
+     *  - 필수: 권한(auth 또는 role)
+     *  - userId 우선, 없으면 uid(구토큰 호환), 그래도 없으면 subject를 Long으로 시도
+     *  - principal: CustomUserPrincipal(userId, subject, role)
+     * ------------------------------------------------------------------ */
     public UsernamePasswordAuthenticationToken getAuthentication(String token) {
-        Claims claims = parseClaims(token);
+        Claims c = parseClaims(token);
 
-        String authClaim = Optional.ofNullable(claims.get("auth"))
-                .map(Object::toString)
-                .orElse(null);
+        // 권한
+        String auth = Optional.ofNullable(c.get("auth")).map(Object::toString).orElse("");
+        String role = Optional.ofNullable(c.get("role")).map(Object::toString).orElse("");
 
-        if (authClaim == null || authClaim.isBlank()) {
-            // Access 토큰이 아니거나 권한 정보가 없는 경우
-            throw new AuthException(AuthErrorCode.JWT_TOKEN_INVALID);
-        }
-
-        List<? extends GrantedAuthority> authorities =
-                Arrays.stream(authClaim.split(","))
+        List<SimpleGrantedAuthority> authorities =
+                !auth.isBlank()
+                        ? Arrays.stream(auth.split(","))
                         .map(String::trim)
                         .filter(s -> !s.isEmpty())
                         .map(SimpleGrantedAuthority::new)
-                        .toList();
+                        .toList()
+                        : (role.isBlank() ? List.of() : List.of(new SimpleGrantedAuthority(role)));
+
+        if (authorities.isEmpty()) {
+            throw new AuthException(AuthErrorCode.JWT_TOKEN_INVALID);
+        }
+
+        // userId 안전하게 추출
+        Object uidObj = c.get("userId"); // JWT에 들어있는 값
+        Long userId = null;
+        if (uidObj instanceof Number n) {
+            userId = n.longValue();
+        } else if (uidObj instanceof String s) {
+            try { userId = Long.valueOf(s); } catch (NumberFormatException ignored) {}
+        }
+
+        if (userId == null) throw new AuthException(AuthErrorCode.TOKEN_INVALID);
+
+        String appleSub = c.getSubject(); // username 용도
+        String email = Optional.ofNullable(c.get("email")).map(Object::toString).orElse("");
+
+        // CustomUserDetails 생성
+        CustomUserDetails userDetails = new CustomUserDetails(userId, appleSub, email, authorities);
+
+        return new UsernamePasswordAuthenticationToken(userDetails, token, authorities);
+    }
 
 
-        String appleSub = claims.getSubject();
-        User user = userRepository.findByAppleSub(appleSub)
-                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
-
-
-        CustomUserDetails principal = new CustomUserDetails(user, authorities);
-        return new UsernamePasswordAuthenticationToken(principal, null, authorities);
+    private Long extractLong(Claims c, String key) {
+        Object v = c.get(key);
+        if (v == null) return null;
+        if (v instanceof Number n) return n.longValue();
+        try { return Long.valueOf(v.toString()); } catch (NumberFormatException e) { return null; }
     }
 
     private Claims parseClaims(String token) {
@@ -191,6 +209,6 @@ public class JwtTokenProvider {
     }
 
     public boolean isRefreshToken(String refreshToken) {
-        return "refresh".equals(parseClaims(refreshToken).get("typ", String.class));
+        return "refresh".equals(parseClaims(refreshToken).get("type", String.class));
     }
 }

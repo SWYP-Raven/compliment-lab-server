@@ -24,6 +24,13 @@ public class CustomUserDetails implements UserDetails {
         this.authorities = authorities;
     }
 
+    public CustomUserDetails(Long id, String appleSub, String email, List<? extends GrantedAuthority> authorities) {
+        this.id = id;
+        this.appleSub = appleSub;
+        this.email = email;
+        this.authorities = authorities;
+    }
+
     @Override public Collection<? extends GrantedAuthority> getAuthorities() { return authorities; }
     @Override public String getPassword() { return ""; } // 소셜 로그인이라 미사용
     @Override public String getUsername() { return appleSub; } // 핵심: appleSub를 username으로

@@ -7,12 +7,21 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
 import java.time.LocalDateTime;
 
-@Getter
+@Getter 
 @Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor 
+@Builder
+@EqualsAndHashCode(of = "id")
 @Entity
-@NoArgsConstructor
+@Table(
+        name = "chat",
+        schema = "compliment_lab",
+        indexes = {
+                @Index(name = "ix_chat_friend_created", columnList = "friend_id, created_at")
+        }
+)
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "chat", schema = "compliment_lab")
 public class Chat {
   
     public Chat(String chat, RoleType role, Friend friend) {
@@ -22,13 +31,20 @@ public class Chat {
     }
 
     @Id
-    @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "friend_id", nullable = false)
     private Friend friend;
+
+
+    @PrePersist
+    void prePersist() {
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (role == null) role = RoleType.USER;
+    }
 
     @Column(name = "message", length = Integer.MAX_VALUE)
     private String message;
@@ -40,4 +56,3 @@ public class Chat {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 }
-
