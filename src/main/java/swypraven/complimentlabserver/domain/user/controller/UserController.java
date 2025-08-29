@@ -3,6 +3,9 @@ package swypraven.complimentlabserver.domain.user.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import swypraven.complimentlabserver.domain.user.model.request.NicknameRequest;
+import swypraven.complimentlabserver.domain.user.service.UserService;
 
 import org.springframework.web.bind.annotation.*;
 import swypraven.complimentlabserver.domain.user.model.request.NicknameRequest;
@@ -13,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import swypraven.complimentlabserver.domain.user.model.request.NicknameRequest;
 import swypraven.complimentlabserver.domain.user.service.UserService;
 import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
-
 import swypraven.complimentlabserver.global.response.ApiResponse;
 
 @RestController
