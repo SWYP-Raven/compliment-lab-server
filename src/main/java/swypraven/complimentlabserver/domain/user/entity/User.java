@@ -1,29 +1,60 @@
 package swypraven.complimentlabserver.domain.user.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "user")
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "users", // ← 예약어 회피
+        indexes = {
+                @Index(name = "idx_users_email", columnList = "email")
+        },
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_users_apple_sub", columnNames = {"apple_sub"})
+        })
 public class User {
+
+    public User(String email, String appleSub) {
+        this.email = email;
+        this.appleSub = appleSub;
+    }
+
     @Id
-    @Column(nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "nickname", nullable = false)
+    // 닉네임: 기본값 생성 전략을 쓰지 않는다면 nullable = true 권장
+    @Column(name = "nickname")
     private String nickname;
 
     @Column(name = "alarm", nullable = false)
     @JdbcTypeCode(SqlTypes.TINYINT)
     private Boolean alarm = false;
 
-    @Column(name = "email", nullable = false)
+    // 애플은 email이 없을 수 있음 → nullable = true
+    @Column(name = "email", length = 191)
     private String email;
 
+    // 애플 고유 사용자 ID(고정) - 유니크
+    @Column(name = "apple_sub", nullable = false, unique = true, length = 191)
+    private String appleSub;
+
+    @Column(name = "role", nullable = false, length = 50)
+    private String role; // 예: ROLE_USER
+
+    // refresh token 저장용
+    @Column(name = "refresh_token", length = 512)
+    private String refreshToken;
+
+    // 필요 시 편의 메서드들…
+
+    public User setRole(String role) {
+        this.role = role;
+        return this;
+    }
 }

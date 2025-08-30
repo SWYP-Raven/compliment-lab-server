@@ -1,11 +1,11 @@
 package swypraven.complimentlabserver.domain.compliment.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-@Getter
-@Setter
+@Getter @Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 @Entity
 @Table(name = "type_compliment", schema = "compliment_lab")
 public class TypeCompliment {
@@ -17,7 +17,7 @@ public class TypeCompliment {
     @Column(name = "type_name", nullable = false)
     private String name;
 
-    @Column(name = "description")
+    @Lob
     private String description;
 
 }
