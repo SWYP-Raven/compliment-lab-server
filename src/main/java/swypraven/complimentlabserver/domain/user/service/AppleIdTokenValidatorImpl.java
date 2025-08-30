@@ -14,10 +14,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import swypraven.complimentlabserver.domain.user.repository.UserRepository;
 import swypraven.complimentlabserver.global.exception.auth.AuthErrorCode;
 import swypraven.complimentlabserver.global.exception.auth.AuthException;
-
 import java.net.URL;
+import java.util.Date;
 
 @Slf4j
 @Service
@@ -30,9 +31,14 @@ public class AppleIdTokenValidatorImpl implements AppleIdTokenValidator {
 
     private static final String JWK_URL = "https://appleid.apple.com/auth/keys";
     private static final String ISS = "https://appleid.apple.com";
+    private final UserRepository userRepository;
 
     @Value("${apple.client-id}")
     private String appleClientId;
+
+    public AppleIdTokenValidatorImpl(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @Override
     public JWTClaimsSet validate(String idToken) {
@@ -46,10 +52,12 @@ public class AppleIdTokenValidatorImpl implements AppleIdTokenValidator {
                 throw new AuthException(AuthErrorCode.JWT_SIGNATURE_INVALID);
             }
 //             //만료 체크를 켜고 싶으면 주석 해제
-//             Date exp = claims.getExpirationTime();
-//             if (exp == null || exp.before(new Date())) {
-//                 throw new LoginFailedException.AppleIdTokenValidationException("토큰 만료");
-//             }
+             Date exp = claims.getExpirationTime();
+             if (exp == null || exp.before(new Date())) {
+                 String email = claims.getStringClaim("email");
+                 userRepository.deleteByEmail(email);
+                 throw new AuthException(AuthErrorCode.APPLE_TOKEN_EXPIRED);
+             }
 
             return claims;
 
