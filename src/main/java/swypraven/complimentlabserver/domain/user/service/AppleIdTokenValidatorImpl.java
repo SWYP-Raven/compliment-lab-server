@@ -48,10 +48,10 @@ public class AppleIdTokenValidatorImpl implements AppleIdTokenValidator {
                 throw new AuthException(AuthErrorCode.JWT_SIGNATURE_INVALID);
             }
            // 만료 시간 검증
-//            Date exp = claims.getExpirationTime();
-//            if (exp == null || new Date(System.currentTimeMillis() - CLOCK_SKEW_MS).after(exp)) {
-//                throw new AuthException(AuthErrorCode.JWT_TOKEN_EXPIRED);
-//            }
+            Date exp = claims.getExpirationTime();
+            if (exp == null || new Date(System.currentTimeMillis() - CLOCK_SKEW_MS).after(exp)) {
+                throw new AuthException(AuthErrorCode.JWT_TOKEN_EXPIRED);
+            }
 
             return claims;
         } catch (AuthException e) {
@@ -61,14 +61,12 @@ public class AppleIdTokenValidatorImpl implements AppleIdTokenValidator {
             throw new AuthException(AuthErrorCode.APPLE_AUTH_FAILED);
         }
     }
-
-
     ConfigurableJWTProcessor<SecurityContext> createJwtProcessor() throws Exception {
         RemoteJWKSet<SecurityContext> jwkSource = new RemoteJWKSet<>(new URL(JWK_URL));
-        JWSVerificationKeySelector<SecurityContext> selector = new JWSVerificationKeySelector<>(JWSAlgorithm.RS256, jwkSource);
+        JWSVerificationKeySelector<SecurityContext> selector =
+                new JWSVerificationKeySelector<>(JWSAlgorithm.RS256, jwkSource);
         DefaultJWTProcessor<SecurityContext> p = new DefaultJWTProcessor<>();
         p.setJWSKeySelector(selector);
-        p.setJWTClaimsSetVerifier((claims, context) -> { /* 수동 검증은 위에서 */ });
         return p;
     }
 }

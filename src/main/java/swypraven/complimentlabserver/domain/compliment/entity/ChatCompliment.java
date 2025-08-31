@@ -58,7 +58,7 @@ public class ChatCompliment {
 
     @PrePersist
     void prePersist() {
-        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (createdAt == null) createdAt = Instant.now();
     }
 
     /** 팩토리 메서드 (텍스트 중심) */

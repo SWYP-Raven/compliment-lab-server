@@ -71,7 +71,6 @@ public class ComplimentService {
 //        return TodayDto.from(picked);
 //    }
 
-
     @Transactional
     public TodayDto pickRandomForUser(Long userId) {
         User user = userRepo.findById(userId)

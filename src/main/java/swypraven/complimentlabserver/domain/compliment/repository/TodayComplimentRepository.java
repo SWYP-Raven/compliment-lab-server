@@ -11,6 +11,7 @@ import java.util.Optional;
 
 public interface TodayComplimentRepository extends JpaRepository<TodayCompliment, Long> {
     // KST 오늘 0시~내일 0시 범위에서 최신 1건
+
     Optional<TodayCompliment> findTopByCreatedAtBetweenOrderByCreatedAtDesc(LocalDateTime start, LocalDateTime end);
 
 
@@ -24,4 +25,5 @@ public interface TodayComplimentRepository extends JpaRepository<TodayCompliment
         ) 
         """, nativeQuery = true)
     List<TodayCompliment> findAllNotDuplicated(@Param("userId") Long userId);
+
 }
