@@ -8,12 +8,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
 import swypraven.complimentlabserver.global.exception.auth.AuthErrorCode;
 import swypraven.complimentlabserver.global.exception.auth.AuthException;
 
@@ -76,7 +78,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 throw new InvalidJwtTokenException("Invalid or expired token");
             }
 
-        } catch (Exception e) {
+        } catch (Exception | JwtTokenProvider.InvalidJwtTokenException e) {
             log.warn("JWT 처리 중 예외 발생: {}", e.getMessage());
             // response.write 대신 예외를 던져서 EntryPoint로 위임
             throw new AuthException(AuthErrorCode.TOKEN_INVALID);

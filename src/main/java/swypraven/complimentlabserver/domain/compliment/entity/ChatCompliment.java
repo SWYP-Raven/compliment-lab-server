@@ -7,7 +7,7 @@ import org.hibernate.type.SqlTypes;
 import swypraven.complimentlabserver.domain.friend.entity.Chat;
 import swypraven.complimentlabserver.domain.user.entity.User;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Getter
@@ -54,7 +54,7 @@ public class ChatCompliment {
     private Map<String, Object> meta;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     @PrePersist
     void prePersist() {

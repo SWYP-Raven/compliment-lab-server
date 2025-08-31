@@ -4,7 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 import swypraven.complimentlabserver.domain.compliment.entity.TodayCompliment;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Builder
@@ -12,7 +12,7 @@ public class TodayDto {
     private final Long id;
     private final Long typeId;
     private final String message;
-    private final Instant createdAt;
+    private final LocalDateTime createdAt;
 
     public static TodayDto from(TodayCompliment tc) {
         return TodayDto.builder()

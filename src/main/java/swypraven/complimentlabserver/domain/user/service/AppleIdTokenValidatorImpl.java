@@ -7,6 +7,7 @@ import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
+import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,7 @@ import swypraven.complimentlabserver.global.exception.auth.AuthException;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -59,7 +61,6 @@ public class AppleIdTokenValidatorImpl implements AppleIdTokenValidator {
             throw new AuthException(AuthErrorCode.APPLE_AUTH_FAILED);
         }
     }
-
     ConfigurableJWTProcessor<SecurityContext> createJwtProcessor() throws Exception {
         RemoteJWKSet<SecurityContext> jwkSource = new RemoteJWKSet<>(new URL(JWK_URL));
         JWSVerificationKeySelector<SecurityContext> selector =

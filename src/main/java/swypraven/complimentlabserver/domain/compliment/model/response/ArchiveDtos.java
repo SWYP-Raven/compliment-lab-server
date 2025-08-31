@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 public class ArchiveDtos {
@@ -17,7 +17,7 @@ public class ArchiveDtos {
         private final Long todayId;      // today_compliment.id
         private final Long typeId;       // today_compliment.type_id
         private final String message;    // today_compliment.message
-        private final Instant createdAt; // saved_today_compliment.created_at
+        private final LocalDateTime createdAt; // saved_today_compliment.created_at
     }
 
     @Getter
@@ -30,6 +30,6 @@ public class ArchiveDtos {
         private final String content;          // 카드 본문 텍스트(필수)
         private final Map<String, Object> meta;// 렌더 옵션(JSON)
         private final String chatMessage;      // 원문 대화 내용(chat.message)
-        private final Instant createdAt;       // chat_compliment.created_at
+        private final LocalDateTime createdAt;       // chat_compliment.created_at
     }
 }
