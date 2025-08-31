@@ -18,11 +18,12 @@ import swypraven.complimentlabserver.domain.friend.repository.ChatRepository;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Map;
+import java.util.Optional;
 
-/**
- * 아카이브(일력/카드) 저장·조회·삭제 구현체
- */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -33,6 +34,8 @@ public class ArchiveServiceImpl implements ArchiveService {
     private final TodayComplimentRepository todayRepo;
     private final ChatRepository chatRepo;
     private final UserRepository userRepo;
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     // ===== 오늘의 칭찬(텍스트) =====
     @Override
@@ -51,15 +54,19 @@ public class ArchiveServiceImpl implements ArchiveService {
                 .user(user)
                 .todayCompliment(today)
                 .build();
+
         saved = savedTodayRepo.save(saved);
         return mapToday(saved);
     }
 
+    // ArchiveServiceImpl.java (일부만)
     @Override
     public Page<TodayArchiveItem> listToday(Long userId, Pageable pageable) {
-        return savedTodayRepo.findByUserIdOrderByCreatedAtDesc(userId, pageable)
+        return savedTodayRepo
+                .findByUserIdOrderByCreatedAtDesc(userId, pageable)
                 .map(this::mapToday);
     }
+
 
     @Override
     @Transactional
@@ -70,25 +77,29 @@ public class ArchiveServiceImpl implements ArchiveService {
         }
     }
 
-    // ===== 대화 카드(이미지) =====
+    // ===== 대화 카드(텍스트 중심) =====
     @Override
     @Transactional
-    public ChatCardArchiveItem saveChatCard(Long userId, Long chatId, String imageUrl, String thumbUrl, Map<String, Object> payload) {
+    public ChatCardArchiveItem saveChatCard(Long userId, Long chatId, String title, String content, Map<String, Object> meta) {
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         Chat chat = chatRepo.findById(chatId)
                 .orElseThrow(() -> new IllegalArgumentException("Chat not found"));
 
-        ChatCompliment entity = ChatCompliment.of(user, chat, imageUrl, thumbUrl, payload);
-        entity = chatComplimentRepo.save(entity);
+        // (선택) 소유권 검사: 내 friend의 chat만 허용
+        if (!chat.getFriend().getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("You cannot archive someone else's chat.");
+        }
 
+        ChatCompliment entity = ChatCompliment.of(user, chat, title, content, meta);
+        entity = chatComplimentRepo.save(entity);
         return mapChatCard(entity);
     }
 
     @Override
     public Page<ChatCardArchiveItem> listChatCards(Long userId, String q, Pageable pageable) {
         if (q != null && !q.isBlank()) {
-            return chatComplimentRepo.searchByUserAndChatMessage(userId, q, pageable)
+            return chatComplimentRepo.searchByUserAndKeyword(userId, q, pageable)
                     .map(this::mapChatCard);
         }
         return chatComplimentRepo.findByUserIdOrderByCreatedAtDesc(userId, pageable)
@@ -104,7 +115,25 @@ public class ArchiveServiceImpl implements ArchiveService {
         }
     }
 
-    // ===== mapper =====
+    // ===== 유저별 과거~오늘 조회(미래 제외, 오늘 포함) =====
+    @Override
+    public Page<TodayArchiveItem> listTodayByUser(Long targetUserId, LocalDate from, LocalDate toOrToday, Pageable pageable) {
+        LocalDate upper = (toOrToday != null) ? toOrToday : LocalDate.now(KST); // 오늘 포함
+        Instant startInclusive = (from != null) ? from.atStartOfDay(KST).toInstant() : Instant.EPOCH;
+        Instant endInclusive = upper.plusDays(1).atStartOfDay(KST).toInstant().minusMillis(1);
+
+        // Repository 쿼리는 아래 시그니처 중 하나가 필요합니다.
+        // 1) 메서드 이름 기반:
+        // Page<SavedTodayCompliment> findByUserIdAndCreatedAtBetweenOrderByCreatedAtDesc(Long userId, Instant start, Instant end, Pageable p);
+        //
+        // 2) 또는 @Query 기반 findHistory(userId, start, end, pageable)
+
+        return savedTodayRepo
+                .findByUserIdAndCreatedAtBetweenOrderByCreatedAtDesc(targetUserId, startInclusive, endInclusive, pageable)
+                .map(this::mapToday);
+    }
+
+    // ===== mappers =====
     private TodayArchiveItem mapToday(SavedTodayCompliment e) {
         return TodayArchiveItem.builder()
                 .id(e.getId())
@@ -119,9 +148,9 @@ public class ArchiveServiceImpl implements ArchiveService {
         return ChatCardArchiveItem.builder()
                 .id(e.getId())
                 .chatId(e.getChat().getId())
-                .imageUrl(e.getImageUrl())
-                .thumbUrl(e.getThumbUrl())
-                .payload(e.getPayload())
+                .title(e.getTitle())
+                .content(e.getContent())
+                .meta(e.getMeta())
                 .chatMessage(e.getChat().getMessage())
                 .createdAt(e.getCreatedAt())
                 .build();

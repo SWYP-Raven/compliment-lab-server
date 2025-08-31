@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 public abstract class DomainException extends RuntimeException {
     private final ErrorCode errorCode;
 
-    protected DomainException(ErrorCode errorCode) {
+    protected DomainException(ErrorCode errorCode, String message) {
         super(errorCode.getMessage());
         this.errorCode = errorCode;
     }
