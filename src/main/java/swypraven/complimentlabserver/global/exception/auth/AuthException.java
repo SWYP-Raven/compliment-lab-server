@@ -6,10 +6,7 @@ public class AuthException extends DomainException {
     private static final String message = "";
 
     public AuthException(AuthErrorCode errorCode) {
-        super(errorCode);
+        super(errorCode, errorCode.getMessage());
     }
 
-    public AuthException(AuthErrorCode errorCode, String message) {
-        super(errorCode);
-    }
 }

@@ -16,6 +16,7 @@ import swypraven.complimentlabserver.global.exception.user.UserErrorCode;
 import swypraven.complimentlabserver.global.exception.user.UserException;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -25,6 +26,7 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final AppleIdTokenValidator appleIdTokenValidator;
+
 
     /**
      * Apple sub(고유 ID) 기준으로 조회하고 없으면 생성
@@ -45,14 +47,54 @@ public class UserService implements UserDetailsService {
                 });
     }
 
+    public Optional<User> findByAppleSubOptional(String appleSub) {
+        return userRepository.findByAppleSub(normalizeSub(appleSub));
+    }
+
+    public boolean existsByAppleSub(String appleSub) {
+        return userRepository.existsByAppleSub(normalizeSub(appleSub));
+    }
+
+    @Transactional
+    public User createUserWithApple(String appleSub, String email, String nickname) {
+        String sub = normalizeSub(appleSub);
+        String normEmail = normalizeEmail(email);
+        if (existsByAppleSub(sub)) {
+            throw new IllegalStateException("이미 가입된 사용자");
+        }
+        User u = new User();
+        u.setAppleSub(sub);
+        u.setEmail(normEmail);        // null 가능
+        u.setNickname(nickname);      // 회원가입 시 필수 (엔티티에서 nullable=false라면 반드시 값 필요)
+        u.setRole("ROLE_USER");
+        return userRepository.save(u);
+    }
+
     public User getByAppleSub(String appleSub) {
-        return userRepository.findByAppleSub(appleSub)
+        return userRepository.findByAppleSub(normalizeSub(appleSub))
                 .orElseThrow(() -> new UsernameNotFoundException("User not found by appleSub: " + appleSub));
     }
 
+    public User getByEmail(String email) {
+        String normEmail = normalizeEmail(email);
+        return userRepository.findByEmail(normEmail)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found by email: " + normEmail));
+    }
 
     public Optional<User> findByRefreshToken(String refreshToken) {
         return userRepository.findByRefreshToken(refreshToken);
+    }
+
+    @Transactional
+    public void setNickname(NicknameRequest request) {
+        JWTClaimsSet claims = appleIdTokenValidator.validate(request.identityToken());
+        String email = claims.getClaims().get("email").toString();
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        user.setNickname(request.nickname());
+    }
+
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(normalizeEmail(email));
     }
 
     /**
@@ -80,12 +122,11 @@ public class UserService implements UserDetailsService {
         return new CustomUserDetails(user, auth);
     }
 
-
-    @Transactional
-    public void setNickname(NicknameRequest request) {
-        JWTClaimsSet claims = appleIdTokenValidator.validate(request.identityToken());
-        String email = claims.getClaims().get("email").toString();
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
-        user.setNickname(request.nickname());
+    // ===== util =====
+    private String normalizeSub(String sub) {
+        return sub == null ? null : sub.trim();
+    }
+    private String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
     }
 }
