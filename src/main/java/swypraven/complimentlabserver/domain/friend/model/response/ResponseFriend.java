@@ -22,11 +22,22 @@ public class ResponseFriend {
     @JsonProperty("last_message")
     private String lastMessage;
 
+    @JsonProperty("is_first")
+    private Boolean isFirst;
+
     public ResponseFriend(Friend friend) {
         this.id = friend.getId();
         this.name = friend.getName();
         this.typeName =  friend.getType().getName();
         this.typeId = friend.getType().getId();
+    }
+
+    public ResponseFriend(Friend friend, Boolean isFirst) {
+        this.id = friend.getId();
+        this.name = friend.getName();
+        this.typeName =  friend.getType().getName();
+        this.typeId = friend.getType().getId();
+        this.isFirst = isFirst;
     }
 
     public ResponseFriend(Friend friend, String lastMessage) {
