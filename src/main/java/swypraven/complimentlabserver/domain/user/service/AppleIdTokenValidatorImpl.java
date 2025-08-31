@@ -7,6 +7,7 @@ import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
+import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,7 @@ import swypraven.complimentlabserver.global.exception.auth.AuthException;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -46,10 +48,10 @@ public class AppleIdTokenValidatorImpl implements AppleIdTokenValidator {
                 throw new AuthException(AuthErrorCode.JWT_SIGNATURE_INVALID);
             }
            // 만료 시간 검증
-            Date exp = claims.getExpirationTime();
-            if (exp == null || new Date(System.currentTimeMillis() - CLOCK_SKEW_MS).after(exp)) {
-                throw new AuthException(AuthErrorCode.JWT_TOKEN_EXPIRED);
-            }
+//            Date exp = claims.getExpirationTime();
+//            if (exp == null || new Date(System.currentTimeMillis() - CLOCK_SKEW_MS).after(exp)) {
+//                throw new AuthException(AuthErrorCode.JWT_TOKEN_EXPIRED);
+//            }
 
             return claims;
         } catch (AuthException e) {

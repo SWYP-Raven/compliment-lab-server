@@ -8,6 +8,16 @@ import org.springframework.web.bind.annotation.*;
 import swypraven.complimentlabserver.domain.user.model.request.NicknameRequest;
 import swypraven.complimentlabserver.domain.user.service.UserService;
 
+import org.springframework.web.bind.annotation.*;
+import swypraven.complimentlabserver.domain.user.model.request.NicknameRequest;
+import swypraven.complimentlabserver.domain.user.service.UserService;
+
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import swypraven.complimentlabserver.domain.user.model.request.NicknameRequest;
+import swypraven.complimentlabserver.domain.user.service.UserService;
+import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
+
 import swypraven.complimentlabserver.global.response.ApiResponse;
 
 @RestController
