@@ -221,7 +221,7 @@ public class JwtTokenProvider {
         return "refresh".equals(parseClaims(refreshToken).get("typ", String.class));
     }
 
-    private class InvalidJwtTokenException extends Throwable {
+    class InvalidJwtTokenException extends Throwable {
         public InvalidJwtTokenException(String s) {
         }
     }
