@@ -1,14 +1,19 @@
 // src/main/java/swypraven/complimentlabserver/domain/user/service/UserService.java
 package swypraven.complimentlabserver.domain.user.service;
 
+import com.nimbusds.jwt.JWTClaimsSet;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import swypraven.complimentlabserver.domain.user.entity.User;
+import swypraven.complimentlabserver.domain.user.model.dto.FindOrCreateAppleUserDto;
+import swypraven.complimentlabserver.domain.user.model.request.NicknameRequest;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
 import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
+import swypraven.complimentlabserver.global.exception.user.UserErrorCode;
+import swypraven.complimentlabserver.global.exception.user.UserException;
 
 import java.util.List;
 import java.util.Locale;
@@ -20,35 +25,25 @@ import java.util.Optional;
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final AppleIdTokenValidator appleIdTokenValidator;
 
-  
+
     /**
      * Apple sub(고유 ID) 기준으로 조회하고 없으면 생성
      * email은 첫 로그인에만 제공될 수 있으니 null 허용, 업데이트 가능하게 처리
      */
     @Transactional
-    public User findOrCreateByAppleSub(String appleSub, String email) {
-        String sub = normalizeSub(appleSub);
-        String normEmail = normalizeEmail(email);
-
+    public FindOrCreateAppleUserDto findOrCreateByAppleSub(String sub, String email) {
         return userRepository.findByAppleSub(sub)
                 .map(user -> {
-                    if (user.getEmail() == null && normEmail != null) {
-                        user.setEmail(normEmail);
+                    if(user.getNickname() == null || user.getNickname().isEmpty()) {
+                        return new FindOrCreateAppleUserDto(user, false);
                     }
-                    if (user.getRole() == null || user.getRole().isBlank()) {
-                        user.setRole("ROLE_USER");
-                    } else if (!user.getRole().startsWith("ROLE_")) {
-                        user.setRole("ROLE_" + user.getRole());
-                    }
-                    return user;
+                    return new FindOrCreateAppleUserDto(user, true);
                 })
                 .orElseGet(() -> {
-                    User u = new User();
-                    u.setAppleSub(sub);
-                    u.setEmail(normEmail);       // null 가능
-                    u.setRole("ROLE_USER");      // 기본 권한
-                    return userRepository.save(u);
+                    User newUser = userRepository.save(new User(email, sub).setRole("ROLE_USER"));
+                    return new FindOrCreateAppleUserDto(newUser, false);
                 });
     }
 
@@ -88,6 +83,14 @@ public class UserService implements UserDetailsService {
 
     public Optional<User> findByRefreshToken(String refreshToken) {
         return userRepository.findByRefreshToken(refreshToken);
+    }
+
+    @Transactional
+    public void setNickname(NicknameRequest request) {
+        JWTClaimsSet claims = appleIdTokenValidator.validate(request.identityToken());
+        String email = claims.getClaims().get("email").toString();
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        user.setNickname(request.nickname());
     }
 
     public Optional<User> findByEmail(String email) {
