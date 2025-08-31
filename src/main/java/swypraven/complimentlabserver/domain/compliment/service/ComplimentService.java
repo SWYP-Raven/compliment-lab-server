@@ -39,8 +39,8 @@ public class ComplimentService {
     /** KST 기준 특정 날짜의 칭찬 (없으면 예외) */
     @Transactional(readOnly = true)
     public TodayDto getByDateOrThrow(LocalDate dateKst) {
-        Instant start = dateKst.atStartOfDay(KST).toInstant();
-        Instant end   = dateKst.plusDays(1).atStartOfDay(KST).toInstant();
+        LocalDateTime start = dateKst.atStartOfDay(); // 00:00:00
+        LocalDateTime end = dateKst.plusDays(1).atStartOfDay(); // 다음 날 00:00:00
 
         TodayCompliment tc = todayRepo
                 .findTopByCreatedAtBetweenOrderByCreatedAtDesc(start, end)
