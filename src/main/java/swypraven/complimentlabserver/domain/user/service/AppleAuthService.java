@@ -26,18 +26,27 @@ public class AppleAuthService {
     // 로그인: 존재하는 사용자만 허용
     public AppleAuthResponse appleLogin(String idToken) throws ParseException {
         JWTClaimsSet claims = appleIdTokenValidator.validate(idToken);
+        String email = claims.getStringClaim("email"); // null 가능
+
+        User user = userService.getByAppleEmail(email);
+        JwtToken token = issue(user);
+
+        return new AppleAuthResponse(user, token);
+    }
+
+
+    public AppleAuthResponse appleSignUp(String idToken, String nickname) throws ParseException {
+        JWTClaimsSet claims = appleIdTokenValidator.validate(idToken);
         String sub = claims.getSubject();
         String email = claims.getStringClaim("email"); // null 가능
 
-        FindOrCreateAppleUserDto findOrCreateResponse = userService.findOrCreateByAppleSub(sub, email);
-        JwtToken token = issue(findOrCreateResponse.getUser());
+        FindOrCreateAppleUserDto appleUser = userService.findOrCreate(sub, email, nickname);
 
+        JwtToken token = issue(appleUser.getUser());
 
-        if(findOrCreateResponse.getIsSignUp()) { // 로그인일 경우
-            return new AppleAuthResponse(token, findOrCreateResponse);
-        }
-        return new AppleAuthResponse(findOrCreateResponse);
+        return new AppleAuthResponse(appleUser.getUser(), token);
     }
+
 
     private JwtToken issue(User user) {
         Authentication authentication = new UsernamePasswordAuthenticationToken(

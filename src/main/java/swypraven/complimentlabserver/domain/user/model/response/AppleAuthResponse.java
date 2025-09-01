@@ -3,6 +3,7 @@ package swypraven.complimentlabserver.domain.user.model.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
+import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.model.dto.FindOrCreateAppleUserDto;
 import swypraven.complimentlabserver.global.auth.jwt.JwtToken;
 
@@ -23,6 +24,12 @@ public class AppleAuthResponse {
     public AppleAuthResponse(FindOrCreateAppleUserDto findOrCreateResponse) {
         this.userId = findOrCreateResponse.getUser().getId();
         this.isSignup = findOrCreateResponse.getIsSignUp();
+    }
+
+    public AppleAuthResponse(User user, JwtToken token) {
+        this.userId = user.getId();
+        this.accessToken = token.accessToken();
+        this.refreshToken = token.refreshToken();
     }
 
     private Long userId;

@@ -25,16 +25,16 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final AppleIdTokenValidator appleIdTokenValidator;
-    /**
-     * Apple sub(고유 ID) 기준으로 조회하고 없으면 생성
-     * email은 첫 로그인에만 제공될 수 있으니 null 허용, 업데이트 가능하게 처리
-     */
+
+
     @Transactional
-    public FindOrCreateAppleUserDto findOrCreateByAppleSub(String sub, String email) {
-        return userRepository.findByAppleSub(sub)
+    public FindOrCreateAppleUserDto findOrCreate(String sub, String email, String nickname) {
+
+        return userRepository.findByEmail(email)
                 .map(user -> {
                     if(user.getNickname() == null || user.getNickname().isEmpty()) {
-                        return new FindOrCreateAppleUserDto(user, false);
+                        user.setNickname(nickname);
+                        return new FindOrCreateAppleUserDto(user, true);
                     }
                     return new FindOrCreateAppleUserDto(user, true);
                 })
@@ -47,6 +47,11 @@ public class UserService implements UserDetailsService {
     public User getByAppleSub(String appleSub) {
         return userRepository.findByAppleSub(appleSub)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found by appleSub: " + appleSub));
+    }
+
+    public User getByAppleEmail(String email) {
+        return userRepository.findByAppleSub(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found by email: " + email));
     }
 
 
