@@ -1,7 +1,5 @@
-// src/main/java/swypraven/complimentlabserver/domain/user/service/UserService.java
 package swypraven.complimentlabserver.domain.user.service;
 
-import com.nimbusds.jwt.JWTClaimsSet;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
@@ -9,7 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.model.dto.FindOrCreateAppleUserDto;
-import swypraven.complimentlabserver.domain.user.model.request.NicknameRequest;
+import swypraven.complimentlabserver.domain.user.model.request.UpdateUserRequest;
+import swypraven.complimentlabserver.domain.user.model.response.UserInfoResponse;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
 import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
 import swypraven.complimentlabserver.global.exception.user.UserErrorCode;
@@ -25,8 +24,6 @@ import java.util.Optional;
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
-    private final AppleIdTokenValidator appleIdTokenValidator;
-
 
 
     @Transactional
@@ -76,12 +73,20 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public void setNickname(NicknameRequest request) {
-        JWTClaimsSet claims = appleIdTokenValidator.validate(request.identityToken());
-        String email = claims.getClaims().get("email").toString();
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
-        user.setNickname(request.nickname());
+    public UserInfoResponse updateUser(UpdateUserRequest request, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        User updatedUser = user.update(request);
+        return new UserInfoResponse(updatedUser);
     }
+
+
+    @Transactional(readOnly = true)
+    public UserInfoResponse getUserInfo(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        return new UserInfoResponse(user);
+    }
+
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(normalizeEmail(email));

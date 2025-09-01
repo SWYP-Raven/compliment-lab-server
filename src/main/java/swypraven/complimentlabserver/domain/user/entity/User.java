@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import swypraven.complimentlabserver.domain.user.model.request.UpdateUserRequest;
 
 @Getter
 @Setter
@@ -72,6 +73,16 @@ public class User {
 
     public User setRole(String role) {
         this.role = role;
+        return this;
+    }
+
+    public User update(UpdateUserRequest updateUserRequest) {
+        this.nickname = updateUserRequest.nickname();
+        this.friendAlarm = updateUserRequest.friendAlarm();
+        this.archiveAlarm = updateUserRequest.archiveAlarm();
+        this.marketingAlarm = updateUserRequest.marketingAlarm();
+        this.eventAlarm = updateUserRequest.eventAlarm();
+
         return this;
     }
 }
