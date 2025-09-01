@@ -3,6 +3,7 @@ package swypraven.complimentlabserver.domain.friend.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import swypraven.complimentlabserver.domain.friend.model.request.RequestCreateFriend;
 import swypraven.complimentlabserver.domain.friend.model.request.RequestUpdateFriend;
@@ -47,7 +48,9 @@ public class FriendController {
     }
 
     @DeleteMapping("/{friendId}")
-    public ResponseEntity<ApiResponse<ResponseFriend>> deleteFriend(@PathVariable Long friendId) {
+    public ResponseEntity<ApiResponse<ResponseFriend>> deleteFriend(
+            @PathVariable Long friendId)
+    {
         friendService.delete(friendId);
         return ResponseEntity.status(200).body(ApiResponse.success("200", "성공"));
     }
