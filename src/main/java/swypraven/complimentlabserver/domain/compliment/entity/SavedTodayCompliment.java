@@ -3,8 +3,6 @@ package swypraven.complimentlabserver.domain.compliment.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import swypraven.complimentlabserver.domain.user.entity.User;
-
-import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Getter @Setter

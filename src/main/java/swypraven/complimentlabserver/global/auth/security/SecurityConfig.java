@@ -23,7 +23,7 @@ import java.util.Arrays;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-public class    SecurityConfig {
+public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
@@ -48,14 +48,15 @@ public class    SecurityConfig {
                 // SecurityConfig
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/v1/auth/**",
-                                "/api/v1/archive/chat-cards",
-                                "/api/v1/compliments/today",   // ✅ 오늘의 칭찬 조회 공개
+                                "/auth/**",
+                                "/archive/chat-cards",
+                                "/archive/today",
+                                "/compliments/today",   // ✅ 오늘의 칭찬 조회 공개
                                 "/v3/api-docs/**", "/swagger-ui/**",
                                 "/actuator/**",
                                 "/favicon.ico"
                         ).permitAll()
-                        .requestMatchers("/auth/**", "/actuator/**", "user/nickname").permitAll()  // 수정
+                        .requestMatchers("/auth/**", "/actuator/**", "user/nickname","/archive/**").permitAll()  // 수정
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/favicon.ico").permitAll()
                         .requestMatchers("/user/test").hasRole("USER")
@@ -87,7 +88,6 @@ public class    SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(Arrays.asList("*")); // 실제 배포 시에는 도메인 제한 권장
-        configuration.setAllowedOrigins(Arrays.asList("https://dev.compliment.store"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
