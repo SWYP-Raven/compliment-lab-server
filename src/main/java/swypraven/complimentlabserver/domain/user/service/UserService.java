@@ -28,19 +28,11 @@ public class UserService implements UserDetailsService {
     private final AppleIdTokenValidator appleIdTokenValidator;
 
 
-    /**
-     * Apple sub(고유 ID) 기준으로 조회하고 없으면 생성
-     * email은 첫 로그인에만 제공될 수 있으니 null 허용, 업데이트 가능하게 처리
-     */
+
     @Transactional
-    public FindOrCreateAppleUserDto findOrCreateByAppleSub(String sub, String email) {
-        return userRepository.findByAppleSub(sub)
-                .map(user -> {
-                    if(user.getNickname() == null || user.getNickname().isEmpty()) {
-                        return new FindOrCreateAppleUserDto(user, false);
-                    }
-                    return new FindOrCreateAppleUserDto(user, true);
-                })
+    public FindOrCreateAppleUserDto findOrCreate(String sub, String email) {
+        return userRepository.findByEmail(email)
+                .map(user -> new FindOrCreateAppleUserDto(user, true))
                 .orElseGet(() -> {
                     User newUser = userRepository.save(new User(email, sub).setRole("ROLE_USER"));
                     return new FindOrCreateAppleUserDto(newUser, false);
@@ -74,11 +66,9 @@ public class UserService implements UserDetailsService {
         return userRepository.findByAppleSub(normalizeSub(appleSub))
                 .orElseThrow(() -> new UsernameNotFoundException("User not found by appleSub: " + appleSub));
     }
-
-    public User getByEmail(String email) {
-        String normEmail = normalizeEmail(email);
-        return userRepository.findByEmail(normEmail)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found by email: " + normEmail));
+    public User getByAppleEmail(String email) {
+        return userRepository.findByAppleSub(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found by email: " + email));
     }
 
     public Optional<User> findByRefreshToken(String refreshToken) {
@@ -122,11 +112,13 @@ public class UserService implements UserDetailsService {
         return new CustomUserDetails(user, auth);
     }
 
-    // ===== util =====
+
+
     private String normalizeSub(String sub) {
         return sub == null ? null : sub.trim();
     }
     private String normalizeEmail(String email) {
         return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
+
     }
 }

@@ -18,4 +18,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // UserRepository
     boolean existsByAppleSub(String appleSub);
     boolean existsByEmail(String email);
+
+    void deleteByEmail(String email);
 }

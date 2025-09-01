@@ -6,6 +6,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.model.dto.FindOrCreateAppleUserDto;
 import swypraven.complimentlabserver.domain.user.model.response.AppleAuthResponse;
@@ -23,21 +24,21 @@ public class AppleAuthService {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
 
-    // 로그인: 존재하는 사용자만 허용
-    public AppleAuthResponse appleLogin(String idToken) throws ParseException {
+
+    @Transactional
+    public AppleAuthResponse auth(String idToken) throws ParseException {
         JWTClaimsSet claims = appleIdTokenValidator.validate(idToken);
         String sub = claims.getSubject();
         String email = claims.getStringClaim("email"); // null 가능
 
-        FindOrCreateAppleUserDto findOrCreateResponse = userService.findOrCreateByAppleSub(sub, email);
-        JwtToken token = issue(findOrCreateResponse.getUser());
+        FindOrCreateAppleUserDto appleUser = userService.findOrCreate(sub, email);
+        JwtToken token = issue(appleUser.getUser());
 
+        appleUser.getUser().setRefreshToken(token.refreshToken());
 
-        if(findOrCreateResponse.getIsSignUp()) { // 로그인일 경우
-            return new AppleAuthResponse(token, findOrCreateResponse);
-        }
-        return new AppleAuthResponse(findOrCreateResponse);
+        return new AppleAuthResponse(appleUser, token);
     }
+
 
     private JwtToken issue(User user) {
         Authentication authentication = new UsernamePasswordAuthenticationToken(
