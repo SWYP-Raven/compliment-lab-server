@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import swypraven.complimentlabserver.domain.compliment.entity.TypeCompliment;
 import swypraven.complimentlabserver.domain.compliment.model.dto.ChatResponse;
-import swypraven.complimentlabserver.domain.compliment.repository.TypeComplimentRepository;
 import swypraven.complimentlabserver.domain.compliment.service.ChatService;
 import swypraven.complimentlabserver.domain.compliment.service.ComplimentTypeService;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
