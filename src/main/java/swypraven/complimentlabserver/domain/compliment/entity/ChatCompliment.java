@@ -7,6 +7,7 @@ import org.hibernate.type.SqlTypes;
 import swypraven.complimentlabserver.domain.friend.entity.Chat;
 import swypraven.complimentlabserver.domain.user.entity.User;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -58,7 +59,7 @@ public class ChatCompliment {
 
     @PrePersist
     void prePersist() {
-        if (createdAt == null) createdAt = Instant.now();
+        if (createdAt == null) createdAt = LocalDateTime.from(Instant.now());
     }
 
     /** 팩토리 메서드 (텍스트 중심) */

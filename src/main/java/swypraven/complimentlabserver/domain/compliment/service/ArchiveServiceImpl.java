@@ -20,6 +20,7 @@ import swypraven.complimentlabserver.domain.user.repository.UserRepository;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Map;
 import java.util.Optional;
@@ -140,7 +141,7 @@ public class ArchiveServiceImpl implements ArchiveService {
                 .todayId(e.getTodayCompliment().getId())
                 .typeId(e.getTodayCompliment().getType().getId())
                 .message(e.getTodayCompliment().getMessage())
-                .createdAt(e.getCreatedAt())
+                .createdAt(LocalDateTime.ofInstant(e.getCreatedAt(), KST)) // ✅ 변환
                 .build();
     }
 

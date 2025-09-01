@@ -57,4 +57,18 @@ public class User {
         this.role = role;
         return this;
     }
+    /**
+     * Compliment 시퀀스 생성을 위한 seed 값
+     * 유저 가입 시 랜덤/고정 값으로 부여
+     */
+    @Column(name = "seed", nullable = false)
+    private Integer seed;
+
+    public Integer getSeed() {
+        return this.seed;
+    }
+
+    public void setSeed(Integer seed) {
+        this.seed = seed;
+    }
 }
