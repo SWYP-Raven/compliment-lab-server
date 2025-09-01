@@ -3,7 +3,6 @@ package swypraven.complimentlabserver.domain.user.model.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
-import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.model.dto.FindOrCreateAppleUserDto;
 import swypraven.complimentlabserver.global.auth.jwt.JwtToken;
 
@@ -12,24 +11,13 @@ import swypraven.complimentlabserver.global.auth.jwt.JwtToken;
 @AllArgsConstructor
 public class AppleAuthResponse {
 
-    // 로그인
-    public AppleAuthResponse(JwtToken token, FindOrCreateAppleUserDto findOrCreateResponse) {
-        this.userId = findOrCreateResponse.getUser().getId();
-        this.isSignup = findOrCreateResponse.getIsSignUp();
+
+    public AppleAuthResponse(FindOrCreateAppleUserDto dto, JwtToken token) {
+        this.userId = dto.getUser().getId();
         this.accessToken = token.accessToken();
         this.refreshToken = token.refreshToken();
-    }
+        this.isSignup = dto.getIsSignUp();
 
-    // 회원 가입
-    public AppleAuthResponse(FindOrCreateAppleUserDto findOrCreateResponse) {
-        this.userId = findOrCreateResponse.getUser().getId();
-        this.isSignup = findOrCreateResponse.getIsSignUp();
-    }
-
-    public AppleAuthResponse(User user, JwtToken token) {
-        this.userId = user.getId();
-        this.accessToken = token.accessToken();
-        this.refreshToken = token.refreshToken();
     }
 
     private Long userId;

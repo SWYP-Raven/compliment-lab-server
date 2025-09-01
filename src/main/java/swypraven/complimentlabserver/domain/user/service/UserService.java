@@ -28,20 +28,18 @@ public class UserService implements UserDetailsService {
 
 
     @Transactional
-    public FindOrCreateAppleUserDto findOrCreate(String sub, String email, String nickname) {
+    public FindOrCreateAppleUserDto findOrCreate(String sub, String email) {
 
         return userRepository.findByEmail(email)
-                .map(user -> {
-                    if(user.getNickname() == null || user.getNickname().isEmpty()) {
-                        user.setNickname(nickname);
-                        return new FindOrCreateAppleUserDto(user, true);
-                    }
-                    return new FindOrCreateAppleUserDto(user, true);
-                })
+                .map(user -> new FindOrCreateAppleUserDto(user, true))
                 .orElseGet(() -> {
                     User newUser = userRepository.save(new User(email, sub).setRole("ROLE_USER"));
                     return new FindOrCreateAppleUserDto(newUser, false);
                 });
+    }
+
+    public void setRefreshToken(String refreshToken, User user) {
+        user.setRefreshToken(refreshToken);
     }
 
     public User getByAppleSub(String appleSub) {

@@ -25,12 +25,12 @@ public class AuthController {
     private final AppleAuthService appleAuthService;
     private final TokenRefreshService tokenRefreshService;
 
-    @PostMapping(value = "/sign-up", consumes = "application/json", produces = "application/json")
+    @PostMapping(value = "/apple", consumes = "application/json", produces = "application/json")
     @Operation(summary = "애플 로그인", description = "회원가입 및 토큰 발급")
     public ResponseEntity<ApiResponse<AppleAuthResponse>> appleSignUp(
             @Valid @RequestBody AppleLoginRequest request
     ) throws ParseException {
-        AppleAuthResponse response = appleAuthService.appleSignUp(request.identityToken(), request.nickname());
+        AppleAuthResponse response = appleAuthService.auth(request.identityToken());
         return ResponseEntity.ok(ApiResponse.of(true, response, "애플 인증 성공"));
     }
 
