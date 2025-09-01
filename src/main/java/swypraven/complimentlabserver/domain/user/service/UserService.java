@@ -31,7 +31,6 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public FindOrCreateAppleUserDto findOrCreate(String sub, String email) {
-
         return userRepository.findByEmail(email)
                 .map(user -> new FindOrCreateAppleUserDto(user, true))
                 .orElseGet(() -> {
@@ -40,9 +39,6 @@ public class UserService implements UserDetailsService {
                 });
     }
 
-    public void setRefreshToken(String refreshToken, User user) {
-        user.setRefreshToken(refreshToken);
-    }
     public Optional<User> findByAppleSubOptional(String appleSub) {
         return userRepository.findByAppleSub(normalizeSub(appleSub));
     }
@@ -117,14 +113,7 @@ public class UserService implements UserDetailsService {
     }
 
 
-    @Transactional
-    public void setNickname(NicknameRequest request) {
-        JWTClaimsSet claims = appleIdTokenValidator.validate(request.identityToken());
-        String email = claims.getClaims().get("email").toString();
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
-        user.setNickname(request.nickname());
-    // ===== util =====
     private String normalizeSub(String sub) {
         return sub == null ? null : sub.trim();
     }
