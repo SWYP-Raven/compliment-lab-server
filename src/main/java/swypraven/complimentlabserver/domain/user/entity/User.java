@@ -2,9 +2,9 @@ package swypraven.complimentlabserver.domain.user.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import swypraven.complimentlabserver.domain.user.model.request.UpdateUserRequest;
 
 @Getter
 @Setter
@@ -33,9 +33,26 @@ public class User {
     @Column(name = "nickname", nullable = false)
     private String nickname = "사용자";
 
-    @Column(name = "alarm", nullable = false)
+    @Column(name = "today_alarm", nullable = false)
     @JdbcTypeCode(SqlTypes.TINYINT)
-    private Boolean alarm = false;
+    private Boolean todayAlarm = false;
+
+    @Column(name = "friend_alarm", nullable = false)
+    @JdbcTypeCode(SqlTypes.TINYINT)
+    private Boolean friendAlarm = false;
+
+    @Column(name = "archive_alarm", nullable = false)
+    @JdbcTypeCode(SqlTypes.TINYINT)
+    private Boolean archiveAlarm = false;
+
+    @Column(name = "marketing_alarm", nullable = false)
+    @JdbcTypeCode(SqlTypes.TINYINT)
+    private Boolean marketingAlarm = false;
+
+    @Column(name = "event_alarm", nullable = false)
+    @JdbcTypeCode(SqlTypes.TINYINT)
+    private Boolean eventAlarm = false;
+
 
     // 애플은 email이 없을 수 있음 → nullable = true
     @Column(name = "email", length = 191)
@@ -56,6 +73,16 @@ public class User {
 
     public User setRole(String role) {
         this.role = role;
+        return this;
+    }
+
+    public User update(UpdateUserRequest updateUserRequest) {
+        this.nickname = updateUserRequest.nickname();
+        this.friendAlarm = updateUserRequest.friendAlarm();
+        this.archiveAlarm = updateUserRequest.archiveAlarm();
+        this.marketingAlarm = updateUserRequest.marketingAlarm();
+        this.eventAlarm = updateUserRequest.eventAlarm();
+
         return this;
     }
 }
