@@ -6,6 +6,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.model.dto.FindOrCreateAppleUserDto;
 import swypraven.complimentlabserver.domain.user.model.response.AppleAuthResponse;
@@ -24,7 +25,7 @@ public class AppleAuthService {
     private final JwtTokenProvider jwtTokenProvider;
 
 
-
+    @Transactional
     public AppleAuthResponse auth(String idToken) throws ParseException {
         JWTClaimsSet claims = appleIdTokenValidator.validate(idToken);
         String sub = claims.getSubject();

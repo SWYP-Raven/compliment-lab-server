@@ -30,9 +30,8 @@ public class User {
     private Long id;
 
     // 닉네임: 기본값 생성 전략을 쓰지 않는다면 nullable = true 권장
-    @ColumnDefault(value = "'사용자'")
-    @Column(name = "nickname")
-    private String nickname;
+    @Column(name = "nickname", nullable = false)
+    private String nickname = "사용자";
 
     @Column(name = "alarm", nullable = false)
     @JdbcTypeCode(SqlTypes.TINYINT)
