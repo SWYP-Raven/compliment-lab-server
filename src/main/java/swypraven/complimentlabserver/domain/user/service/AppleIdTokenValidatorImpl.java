@@ -18,7 +18,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import swypraven.complimentlabserver.global.exception.auth.AuthErrorCode;
 import swypraven.complimentlabserver.global.exception.auth.AuthException;
 import java.net.URL;
-import java.util.Date;
+
 
 @Slf4j
 @Service
@@ -49,10 +49,10 @@ public class AppleIdTokenValidatorImpl implements AppleIdTokenValidator {
                 throw new AuthException(AuthErrorCode.JWT_SIGNATURE_INVALID);
             }
              //만료 체크를 켜고 싶으면 주석 해제
-             Date exp = claims.getExpirationTime();
-             if (exp == null || exp.before(new Date())) {
-                 throw new AuthException(AuthErrorCode.APPLE_TOKEN_EXPIRED);
-             }
+//             Date exp = claims.getExpirationTime();
+//             if (exp == null || exp.before(new Date())) {
+//                 throw new AuthException(AuthErrorCode.APPLE_TOKEN_EXPIRED);
+//             }
 
             return claims;
 
