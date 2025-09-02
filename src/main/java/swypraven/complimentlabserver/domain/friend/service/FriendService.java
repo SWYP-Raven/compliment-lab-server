@@ -79,7 +79,9 @@ public class FriendService {
     @Transactional
     public void delete(Long friendId) {
         Friend friend = friendRepository.findById(friendId).orElseThrow(() -> new FriendException(FriendErrorCode.NOT_FOUND_FRIEND));
-        userFriendTypeRepository.save(new UserFriendType(friend.getUser(), friend.getType()));
+        if (!userFriendTypeRepository.existsByUserAndTypeCompliment(friend.getUser(), friend.getType())) {
+            userFriendTypeRepository.save(new UserFriendType(friend.getUser(), friend.getType()));
+        }
         friendRepository.deleteById(friendId);
     }
 
