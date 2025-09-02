@@ -13,7 +13,7 @@ import lombok.Setter;
 public class Compliment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     private String content;
 

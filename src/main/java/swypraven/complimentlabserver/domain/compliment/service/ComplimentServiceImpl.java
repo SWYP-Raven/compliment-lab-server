@@ -96,8 +96,9 @@ public class ComplimentServiceImpl implements ComplimentService {
         // Compliment 묶음 조회 후 맵핑
         List<Compliment> compls = complimentRepo.findAllById(dayToComplId.values());
         // ⭐ Compliment.getId()가 Integer라면 키 타입은 Integer로!
-        Map<Long, Compliment> complMap = compls.stream()
+        Map<Integer, Compliment> complMap = compls.stream()
                 .collect(Collectors.toMap(Compliment::getId, Function.identity()));
+
 
         // 로그 조회
         Map<LocalDate, UserComplimentLog> logs = logRepo.findByUserIdAndDateIn(userId, days).stream()
@@ -106,7 +107,7 @@ public class ComplimentServiceImpl implements ComplimentService {
         // 응답 조립
         List<DayComplimentDto> result = days.stream().map(d -> {
             Integer cid = dayToComplId.get(d);
-            Compliment c = complMap.get(cid);
+            Compliment c = complMap.get(cid); // ✅ 같은 Integer 타입
             if (c == null) {
                 log.warn("Compliment master missing for id={} (date={})", cid, d);
                 throw new NoSuchElementException("Compliment not found: " + cid);
@@ -157,7 +158,7 @@ public class ComplimentServiceImpl implements ComplimentService {
                 .distinct()
                 .collect(Collectors.toList());
 
-        Map<Long, Compliment> complMap = complimentRepo.findAllById(ids).stream()
+        Map<Integer, Compliment> complMap = complimentRepo.findAllById(ids).stream()
                 .collect(Collectors.toMap(Compliment::getId, Function.identity()));
 
         List<DayComplimentDto> items = logs.stream().map(row -> {
