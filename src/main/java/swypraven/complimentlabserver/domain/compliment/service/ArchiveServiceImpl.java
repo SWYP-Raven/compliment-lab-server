@@ -141,7 +141,7 @@ public class ArchiveServiceImpl implements ArchiveService {
                 .todayId(e.getTodayCompliment().getId())
                 .typeId(e.getTodayCompliment().getType().getId())
                 .message(e.getTodayCompliment().getMessage())
-                .createdAt(LocalDateTime.ofInstant(e.getCreatedAt(), KST)) // ✅ 변환
+                .createdAt(LocalDateTime.ofInstant(Instant.from(e.getCreatedAt()), KST)) // ✅ 변환
                 .build();
     }
 
