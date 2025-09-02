@@ -30,6 +30,7 @@ import swypraven.complimentlabserver.global.exception.friend.FriendException;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.time.ZoneId;
 import java.util.Collections;
 
@@ -82,15 +83,19 @@ public class ChatService {
         Friend friend = friendRepository.findById(friendId)
                 .orElseThrow(() -> new FriendException(FriendErrorCode.NOT_FOUND_FRIEND));
 
-        Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Pageable pageable = PageRequest.of(0, size); // 정렬은 JPQL에서 처리
         Slice<Chat> chats = chatRepository.findNextChats(friend, lastCreatedAt, pageable);
 
-        List<ChatResponse> chatResponses = chats.getContent().stream()
+        List<ChatResponse> chatResponses = new ArrayList<>(chats.getContent().stream()
                 .map(ChatResponse::new)
-                .toList();
+                .toList());
+
+        // 최신 메시지가 아래로 가도록 역순으로 변환
+        Collections.reverse(chatResponses);
 
         return ChatResponseSlice.of(chatResponses, chats.hasNext());
     }
+
 
 
     @Transactional

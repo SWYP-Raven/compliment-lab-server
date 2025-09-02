@@ -3,8 +3,7 @@ package swypraven.complimentlabserver.domain.compliment.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import swypraven.complimentlabserver.domain.user.entity.User;
-
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -32,11 +31,11 @@ public class SavedTodayCompliment {
     private TodayCompliment todayCompliment;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
 
     @PrePersist
     void prePersist() {
-        if (createdAt == null) createdAt = Instant.now();
+        if (createdAt == null) createdAt = LocalDateTime.now();
     }
 }

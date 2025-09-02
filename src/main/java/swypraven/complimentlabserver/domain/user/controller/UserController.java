@@ -3,21 +3,13 @@ package swypraven.complimentlabserver.domain.user.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-
-import org.springframework.web.bind.annotation.*;
-import swypraven.complimentlabserver.domain.user.model.request.NicknameRequest;
-import swypraven.complimentlabserver.domain.user.service.UserService;
-
-import org.springframework.web.bind.annotation.*;
-import swypraven.complimentlabserver.domain.user.model.request.NicknameRequest;
-import swypraven.complimentlabserver.domain.user.service.UserService;
-
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import swypraven.complimentlabserver.domain.user.model.request.NicknameRequest;
+import swypraven.complimentlabserver.domain.user.model.request.UpdateUserRequest;
+import swypraven.complimentlabserver.domain.user.model.response.UserInfoResponse;
 import swypraven.complimentlabserver.domain.user.service.UserService;
-import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
 
+import swypraven.complimentlabserver.global.auth.jwt.CustomUserPrincipal;
 import swypraven.complimentlabserver.global.response.ApiResponse;
 
 @RestController
@@ -27,9 +19,18 @@ public class UserController {
 
     private final UserService userService;
 
-    @PutMapping("/nickname")
-    public ResponseEntity<ApiResponse<?>> setNickname(@RequestBody NicknameRequest nicknameRequest) {
-        userService.setNickname(nicknameRequest);
-        return ResponseEntity.ok(ApiResponse.success("200", "닉네임 설정 성공"));
+    @PutMapping
+    public ResponseEntity<ApiResponse<UserInfoResponse>> setNickname(
+            @RequestBody UpdateUserRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal me)
+    {
+        UserInfoResponse userInfoResponse = userService.updateUser(request, me.id());
+        return ResponseEntity.ok(ApiResponse.success(userInfoResponse, "200", "유저 업데이트"));
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<UserInfoResponse>> getUserInfo(@AuthenticationPrincipal CustomUserPrincipal me) {
+        UserInfoResponse userInfo = userService.getUserInfo(me.id());
+        return ResponseEntity.ok(ApiResponse.success(userInfo, "200","조회 성공"));
     }
 }
