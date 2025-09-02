@@ -47,13 +47,21 @@ public class SecurityConfig {
                 // 요청 권한 설정
                 // SecurityConfig
                 .authorizeHttpRequests(auth -> auth
-//                        .requestMatchers("/api/v1/auth/**", "/actuator/**").permitAll()  // 수정
-//                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-//                        .requestMatchers(HttpMethod.GET, "/favicon.ico").permitAll()
-//                        .requestMatchers("/user/test").hasRole("USER")
-//                        .requestMatchers("/admin/**").hasRole("ADMIN")
-//                        .anyRequest().authenticated()
-                                .anyRequest().permitAll()
+                        .requestMatchers(
+                                "/auth/**",
+                                "/archive/chat-cards",
+                                "/archive/today",
+                                "/compliments/today",   // ✅ 오늘의 칭찬 조회 공개
+                                "/v3/api-docs/**", "/swagger-ui/**",
+                                "/actuator/**",
+                                "/favicon.ico"
+                        ).permitAll()
+                        .requestMatchers("/auth/**", "/actuator/**", "user/nickname","/archive/**").permitAll()  // 수정
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/favicon.ico").permitAll()
+                        .requestMatchers("/user/test").hasRole("USER")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .anyRequest().authenticated()
                 )
 
 

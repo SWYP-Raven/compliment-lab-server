@@ -4,12 +4,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import swypraven.complimentlabserver.domain.user.model.request.AppleLoginRequest;
 import swypraven.complimentlabserver.domain.user.model.request.TokenRefreshRequest;
-import swypraven.complimentlabserver.domain.user.model.response.AppleLoginResponse;
+import swypraven.complimentlabserver.domain.user.model.response.AppleAuthResponse;
 import swypraven.complimentlabserver.domain.user.service.AppleAuthService;
 import swypraven.complimentlabserver.domain.user.service.TokenRefreshService;
 import swypraven.complimentlabserver.global.auth.jwt.JwtToken;
@@ -17,24 +16,24 @@ import swypraven.complimentlabserver.global.response.ApiResponse;
 
 import java.text.ParseException;
 
-@Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/auth")
 @Tag(name = "인증 API", description = "사용자 인증 관련 API")
 public class AuthController {
 
     private final AppleAuthService appleAuthService;
     private final TokenRefreshService tokenRefreshService;
 
-    @PostMapping(value = "/apple/login", consumes = "application/json", produces = "application/json")
-    @Operation(summary = "애플 로그인", description = "Apple identityToken으로 로그인 및 토큰 발급")
-    public ResponseEntity<ApiResponse<AppleLoginResponse>> appleLogin(
+    @PostMapping(value = "/apple", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "애플 인증", description = "회원가입, 로그인 및 토큰 발급")
+    public ResponseEntity<ApiResponse<AppleAuthResponse>> appleSignUp(
             @Valid @RequestBody AppleLoginRequest request
     ) throws ParseException {
-        AppleLoginResponse response = appleAuthService.appleLogin(request.identityToken());
-        return ResponseEntity.ok(ApiResponse.of(true, response, "애플 로그인 성공"));
+        AppleAuthResponse response = appleAuthService.auth(request.identityToken());
+        return ResponseEntity.ok(ApiResponse.of(true, response, "애플 인증 성공"));
     }
+
 
     @PostMapping(value = "/token/refresh", consumes = "application/json", produces = "application/json")
     @Operation(summary = "토큰 갱신", description = "Refresh Token으로 Access/Refresh 재발급")
