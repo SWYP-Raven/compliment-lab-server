@@ -3,13 +3,12 @@ package swypraven.complimentlabserver.domain.friend.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import swypraven.complimentlabserver.domain.friend.model.request.RequestCreateFriend;
 import swypraven.complimentlabserver.domain.friend.model.request.RequestUpdateFriend;
 import swypraven.complimentlabserver.domain.friend.model.response.ResponseFriend;
 import swypraven.complimentlabserver.domain.friend.service.FriendService;
-import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
+import swypraven.complimentlabserver.global.auth.jwt.CustomUserPrincipal;
 import swypraven.complimentlabserver.global.response.ApiResponse;
 
 import java.util.List;
@@ -24,17 +23,17 @@ public class FriendController {
     @PostMapping
     public ResponseEntity<ApiResponse<ResponseFriend>> create(
             @RequestBody RequestCreateFriend friend,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal CustomUserPrincipal me
     ) {
-        ResponseFriend character = friendService.create(userDetails, friend);
+        ResponseFriend character = friendService.create(me.id(), friend);
         return ResponseEntity.status(201).body(ApiResponse.success(character, "201", "성공"));
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<ResponseFriend>>> getFriends(
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal CustomUserPrincipal me
     ) {
-        List<ResponseFriend> friends = friendService.getFriends(userDetails);
+        List<ResponseFriend> friends = friendService.getFriends(me.id());
         return ResponseEntity.status(200).body(ApiResponse.success(friends, "200", "성공"));
     }
 

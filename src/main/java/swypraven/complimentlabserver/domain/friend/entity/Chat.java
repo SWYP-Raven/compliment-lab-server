@@ -41,7 +41,7 @@ public class Chat {
     private Friend friend;
 
     @Lob
-    @Column(name = "message", nullable = false)
+    @Column(name = "message", nullable = false, columnDefinition = "LONGTEXT")
     private String message;
 
     @Enumerated(EnumType.STRING)
