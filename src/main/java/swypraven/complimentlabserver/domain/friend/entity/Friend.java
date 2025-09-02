@@ -5,6 +5,9 @@ import lombok.*;
 import swypraven.complimentlabserver.domain.compliment.entity.TypeCompliment;
 import swypraven.complimentlabserver.domain.user.entity.User;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Setter
 @Entity
@@ -27,6 +30,9 @@ public class Friend {
 
     @Column(name = "name")
     private String name;
+
+    @OneToMany(mappedBy = "friend", cascade = CascadeType.REMOVE)
+    private List<Chat> chats = new ArrayList<>();
 
     @Builder
     public Friend(User user, TypeCompliment type, String name) {

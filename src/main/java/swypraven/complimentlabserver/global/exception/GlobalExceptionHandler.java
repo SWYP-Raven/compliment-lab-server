@@ -13,7 +13,6 @@ import swypraven.complimentlabserver.global.exception.user.UserException;
 import swypraven.complimentlabserver.global.response.ApiResponse;
 import swypraven.complimentlabserver.global.response.ErrorResponse;
 
-import java.util.Map;
 
 @Slf4j
 @RestControllerAdvice
@@ -45,6 +44,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleException(Exception ex) {
         log.warn(ex.getMessage(), ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value()).body(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR.value()).body(ApiResponse.error(ex));
     }
 }

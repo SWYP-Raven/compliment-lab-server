@@ -5,29 +5,43 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Map;
-
+/**
+ * 아카이브 관련 요청 DTO
+ * - 오늘의 칭찬 (seed 기반)
+ * - 대화 카드 (seed 기반)
+ */
 public class ArchiveRequests {
 
+    /**
+     * 오늘의 칭찬 저장 요청
+     * seed 기반으로 이미 생성된 문장을 보존
+     */
     @Getter @Setter
-    public static class SaveTodayRequest {
+    public static class SaveTodayBySeedRequest {
+        @NotBlank
+        private String text;      // 생성된 칭찬 문장 (필수)
+
         @NotNull
-        private Long todayId;
+        private Long seed;        // 재현성을 위한 seed (필수)
     }
 
+    /**
+     * 대화 카드 저장 요청
+     * 대화 중 마음에 드는 문장을 보존 (seed 메타 포함 가능)
+     */
     @Getter @Setter
-    public static class SaveChatCardRequest {
+    public static class SaveChatCardBySeedRequest {
         @NotNull
-        private Long chatId;
+        private Long chatId;      // 어떤 대화의 문장인지 (필수)
 
-        // 선택: 카드 제목
-        private String title;
-
-        // 필수: 텍스트 본문
         @NotBlank
-        private String content;
+        private String message;   // 보존할 문장 텍스트 (필수)
 
-        // 선택: 렌더링 옵션(정렬/폰트/컬러 등)
-        private Map<String, Object> meta;
+        @NotBlank
+        private String role;      // 작성자 역할 ("USER" / "ASSISTANT") (필수)
+
+        private Long seed;        // 생성된 문장이라면 seed (선택)
+
+        private String metaJson;  // 추가 메타데이터(JSON 문자열, 선택)
     }
 }

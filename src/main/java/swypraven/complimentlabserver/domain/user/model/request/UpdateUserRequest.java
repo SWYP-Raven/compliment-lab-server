@@ -5,4 +5,4 @@ public record UpdateUserRequest(String nickname,
                                 Boolean archiveAlarm,
                                 Boolean marketingAlarm,
                                 Boolean eventAlarm
-) { }
+){}
