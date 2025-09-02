@@ -32,9 +32,26 @@ public class User {
     @Column(name = "nickname")
     private String nickname;
 
-    @Column(name = "alarm", nullable = false)
+    @Column(name = "today_alarm", nullable = false)
     @JdbcTypeCode(SqlTypes.TINYINT)
-    private Boolean alarm = false;
+    private Boolean todayAlarm = false;
+
+    @Column(name = "friend_alarm", nullable = false)
+    @JdbcTypeCode(SqlTypes.TINYINT)
+    private Boolean friendAlarm = false;
+
+    @Column(name = "archive_alarm", nullable = false)
+    @JdbcTypeCode(SqlTypes.TINYINT)
+    private Boolean archiveAlarm = false;
+
+    @Column(name = "marketing_alarm", nullable = false)
+    @JdbcTypeCode(SqlTypes.TINYINT)
+    private Boolean marketingAlarm = false;
+
+    @Column(name = "event_alarm", nullable = false)
+    @JdbcTypeCode(SqlTypes.TINYINT)
+    private Boolean eventAlarm = false;
+
 
     @Column(name = "email", length = 191)
     private String email;
@@ -56,6 +73,7 @@ public class User {
         return this;
     }
 
+
     public Integer getSeed() {
         return this.seed;
     }
@@ -72,18 +90,13 @@ public class User {
         }
     }
 
-    /** 단일 alarm만 보유하므로 friendAlarm을 대표로 매핑 */
-    public User update(UpdateUserRequest request) {
-        if (request.nickname() != null) {
-            this.nickname = request.nickname();
-        }
-        if (request.friendAlarm() != null) {
-            this.alarm = request.friendAlarm();
-        }
-        // 아래 3개는 현재 엔티티에 컬럼이 없으므로 무시(확장 시 추가)
-        // if (request.archiveAlarm() != null) { ... }
-        // if (request.marketingAlarm() != null) { ... }
-        // if (request.eventAlarm() != null) { ... }
+    public User update(UpdateUserRequest updateUserRequest) {
+        this.nickname = updateUserRequest.nickname();
+        this.friendAlarm = updateUserRequest.friendAlarm();
+        this.archiveAlarm = updateUserRequest.archiveAlarm();
+        this.marketingAlarm = updateUserRequest.marketingAlarm();
+        this.eventAlarm = updateUserRequest.eventAlarm();
+
         return this;
     }
 }
