@@ -5,31 +5,34 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 
+/**
+ * 아카이브 DTO (seed 기반으로 수정됨)
+ */
 public class ArchiveDtos {
 
     @Getter
     @AllArgsConstructor
     @Builder
     public static class TodayArchiveItem {
-        private final Long id;           // saved_today_compliment.id
-        private final Long todayId;      // today_compliment.id
-        private final Long typeId;       // today_compliment.type_id
-        private final String message;    // today_compliment.message
-        private final LocalDateTime createdAt; // saved_today_compliment.created_at
+        private final Long id;              // saved_today_compliment.id
+        private final String text;          // 칭찬 문장
+        private final Long seed;            // 생성 seed
+        private final LocalDateTime createdAt; // 저장 시간
     }
 
     @Getter
     @AllArgsConstructor
     @Builder
     public static class ChatCardArchiveItem {
-        private final Long id;                 // chat_compliment.id
-        private final Long chatId;             // chat.id (원문 대화)
-        private final String title;            // 대화 문장 카드 제목
-        private final String content;          // 카드 본문 텍스트(필수)
-        private final Map<String, Object> meta;// 렌더 옵션(JSON)
-        private final String chatMessage;      // 원문 대화 내용(chat.message)
-        private final LocalDateTime createdAt;       // chat_compliment.created_at
+
+        private final Long id;              // chat_compliment.id
+        private final Long chatId;          // 원문 대화 ID
+        private final String message;       // 카드에 저장된 문장
+        private final String role;          // USER / ASSISTANT
+        private final Long seed;            // seed (선택)
+        private final String metaJson;      // 추가 메타(JSON 문자열)
+        private final LocalDateTime createdAt; // 저장 시간
     }
 }
+

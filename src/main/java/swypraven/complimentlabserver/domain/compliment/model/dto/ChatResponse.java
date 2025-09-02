@@ -5,6 +5,7 @@ import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
 import swypraven.complimentlabserver.domain.compliment.entity.ChatCompliment;
 import swypraven.complimentlabserver.domain.friend.entity.Chat;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Getter
@@ -20,7 +21,7 @@ public class ChatResponse {
 
     public ChatResponse(ChatCompliment chatCompliment) {
         this.id = chatCompliment.getChat().getId();
-        this.time = LocalDateTime.from(chatCompliment.getCreatedAt());
+        this.time = LocalDateTime.from(Instant.from(chatCompliment.getCreatedAt()));
         this.message = chatCompliment.getChat().getMessage();
         this.name = chatCompliment.getChat().getFriend().getName();
         this.role = chatCompliment.getChat().getRole();
