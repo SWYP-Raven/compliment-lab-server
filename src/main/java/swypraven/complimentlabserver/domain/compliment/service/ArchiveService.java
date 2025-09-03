@@ -2,20 +2,20 @@ package swypraven.complimentlabserver.domain.compliment.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.transaction.annotation.Transactional;
+import swypraven.complimentlabserver.domain.compliment.model.request.ArchiveRequests;
 import swypraven.complimentlabserver.domain.compliment.model.response.ArchiveDtos.*;
 
-import java.util.Map;
+import java.time.LocalDate;
+
 public interface ArchiveService {
-    @Transactional(readOnly = false)
 
-    // 오늘의 칭찬(텍스트)
-    TodayArchiveItem saveToday(Long userId, Long todayId);
+    // ===== 오늘의 칭찬 (seed 기반) =====
+    // ArchiveService
+    TodayArchiveItem saveTodayBySeed(Long userId, ArchiveRequests.SaveTodayBySeedRequest req);
+    ChatCardArchiveItem saveChatCardBySeed(Long userId, ArchiveRequests.SaveChatCardBySeedRequest req);
     Page<TodayArchiveItem> listToday(Long userId, Pageable pageable);
-    void removeToday(Long userId, Long savedId);
-
-    // 대화카드(이미지)
-    ChatCardArchiveItem saveChatCard(Long userId, Long chatId, String imageUrl, String thumbUrl, Map<String,Object> payload);
+    Page<TodayArchiveItem> listTodayByUser(Long targetUserId, LocalDate from, LocalDate toOrToday, Pageable pageable);
     Page<ChatCardArchiveItem> listChatCards(Long userId, String q, Pageable pageable);
-    void removeChatCard(Long userId, Long cardId);
+    void removeToday(Long userId, Long id);
+    void removeChatCard(Long userId, Long id);
 }

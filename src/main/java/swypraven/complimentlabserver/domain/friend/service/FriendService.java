@@ -9,13 +9,14 @@ import swypraven.complimentlabserver.domain.compliment.model.dto.ChatResponse;
 import swypraven.complimentlabserver.domain.compliment.service.ChatService;
 import swypraven.complimentlabserver.domain.compliment.service.ComplimentTypeService;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
+import swypraven.complimentlabserver.domain.friend.entity.UserFriendType;
 import swypraven.complimentlabserver.domain.friend.model.request.RequestCreateFriend;
 import swypraven.complimentlabserver.domain.friend.model.request.RequestUpdateFriend;
 import swypraven.complimentlabserver.domain.friend.model.response.ResponseFriend;
 import swypraven.complimentlabserver.domain.friend.repository.FriendRepository;
+import swypraven.complimentlabserver.domain.friend.repository.UserFriendTypeRepository;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
-import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
 import swypraven.complimentlabserver.global.exception.friend.FriendErrorCode;
 import swypraven.complimentlabserver.global.exception.friend.FriendException;
 import swypraven.complimentlabserver.global.exception.user.UserErrorCode;
@@ -29,13 +30,15 @@ import java.util.List;
 public class FriendService {
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
+    private final UserFriendTypeRepository  userFriendTypeRepository;
+
     private final ComplimentTypeService complimentTypeService;
     private final ChatService chatService;
 
     @Transactional
-    public ResponseFriend create(CustomUserDetails userDetails, RequestCreateFriend request) {
+    public ResponseFriend create(Long userId, RequestCreateFriend request) {
 
-        User user = userRepository.findById(userDetails.getId()).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
         TypeCompliment type = complimentTypeService.getType(request.getFriendType());
 
@@ -46,13 +49,15 @@ public class FriendService {
         Friend friend = Friend.builder().name(request.getName()).user(user).type(type).build();
         Friend savedFriend = friendRepository.save(friend);
 
-        return new ResponseFriend(savedFriend);
+        boolean isFirst = !userFriendTypeRepository.existsByUserAndTypeCompliment(user, savedFriend.getType());
+
+        return new ResponseFriend(savedFriend, isFirst);
     }
 
 
     @Transactional(readOnly = true)
-    public List<ResponseFriend> getFriends(CustomUserDetails userDetails) {
-        User user = userRepository.findById(userDetails.getId()).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+    public List<ResponseFriend> getFriends(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
         List<Friend> friends = friendRepository.findAllByUser(user);
 
         return friends.stream().map(friend -> {
@@ -73,6 +78,10 @@ public class FriendService {
 
     @Transactional
     public void delete(Long friendId) {
+        Friend friend = friendRepository.findById(friendId).orElseThrow(() -> new FriendException(FriendErrorCode.NOT_FOUND_FRIEND));
+        if (!userFriendTypeRepository.existsByUserAndTypeCompliment(friend.getUser(), friend.getType())) {
+            userFriendTypeRepository.save(new UserFriendType(friend.getUser(), friend.getType()));
+        }
         friendRepository.deleteById(friendId);
     }
 

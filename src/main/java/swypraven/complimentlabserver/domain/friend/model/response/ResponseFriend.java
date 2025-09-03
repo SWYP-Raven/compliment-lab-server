@@ -1,10 +1,12 @@
 package swypraven.complimentlabserver.domain.friend.model.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
 
 @Getter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ResponseFriend {
 
     @JsonProperty("id")
@@ -22,11 +24,22 @@ public class ResponseFriend {
     @JsonProperty("last_message")
     private String lastMessage;
 
+    @JsonProperty("is_first")
+    private Boolean isFirst;
+
     public ResponseFriend(Friend friend) {
         this.id = friend.getId();
         this.name = friend.getName();
         this.typeName =  friend.getType().getName();
         this.typeId = friend.getType().getId();
+    }
+
+    public ResponseFriend(Friend friend, Boolean isFirst) {
+        this.id = friend.getId();
+        this.name = friend.getName();
+        this.typeName =  friend.getType().getName();
+        this.typeId = friend.getType().getId();
+        this.isFirst = isFirst;
     }
 
     public ResponseFriend(Friend friend, String lastMessage) {

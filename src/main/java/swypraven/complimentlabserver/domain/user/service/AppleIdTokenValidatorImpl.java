@@ -9,6 +9,7 @@ import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -16,11 +17,12 @@ import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import swypraven.complimentlabserver.global.exception.auth.AuthErrorCode;
 import swypraven.complimentlabserver.global.exception.auth.AuthException;
-
 import java.net.URL;
+import java.util.Date;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 @ConditionalOnProperty(
         value = "apple.stub",
         havingValue = "false",
@@ -34,6 +36,7 @@ public class AppleIdTokenValidatorImpl implements AppleIdTokenValidator {
     @Value("${apple.client-id}")
     private String appleClientId;
 
+
     @Override
     public JWTClaimsSet validate(String idToken) {
         try {
@@ -45,14 +48,17 @@ public class AppleIdTokenValidatorImpl implements AppleIdTokenValidator {
             if (!ISS.equals(claims.getIssuer()) || !claims.getAudience().contains(appleClientId)) {
                 throw new AuthException(AuthErrorCode.JWT_SIGNATURE_INVALID);
             }
-//             //만료 체크를 켜고 싶으면 주석 해제
-//             Date exp = claims.getExpirationTime();
-//             if (exp == null || exp.before(new Date())) {
-//                 throw new LoginFailedException.AppleIdTokenValidationException("토큰 만료");
-//             }
+             //만료 체크를 켜고 싶으면 주석 해제
+             //Date exp = claims.getExpirationTime();
+             //if (exp == null || exp.before(new Date())) {
+                 //throw new AuthException(AuthErrorCode.APPLE_TOKEN_EXPIRED);
+            // }
 
             return claims;
 
+        }
+        catch (AuthException e) {
+            throw e;
         }
         catch (Exception e) {
             log.error("Apple ID Token 파싱/검증 실패", e);
