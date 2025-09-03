@@ -11,6 +11,9 @@ public interface ComplimentService {
     ComplimentListResponse getMonth(Long userId, YearMonth ym);
     ComplimentListResponse getRange(Long userId, LocalDate start, LocalDate end);
     void upsertLog(Long userId, LocalDate date, boolean isRead, boolean isArchived);
-    ComplimentListResponse getArchived(Long userId, int page, int size);
+
+    ComplimentListResponse getArchivedByMonth(Long userId, YearMonth ym, int page, int size);
+
+
 }
 
