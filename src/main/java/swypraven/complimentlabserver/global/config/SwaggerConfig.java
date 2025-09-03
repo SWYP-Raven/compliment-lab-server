@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @OpenAPIDefinition(
         servers = {
-                @Server(url = "https://dev.compliment-dev.store", description = "칭찬 연구소  https 서버입니다.")})
+                @Server(url = "https://dev.compliment-lab.store", description = "칭찬 연구소  https 서버입니다.")})
 public class SwaggerConfig {
     @Bean
     public OpenAPI customOpenAPI() {
