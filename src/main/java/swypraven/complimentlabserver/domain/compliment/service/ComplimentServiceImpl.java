@@ -3,6 +3,8 @@ package swypraven.complimentlabserver.domain.compliment.service;
 // Lombok / Spring
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 
 // Java
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.List;
@@ -146,34 +149,47 @@ public class ComplimentServiceImpl implements ComplimentService {
         logRepo.save(logRow);
     }
 
-    /** 아카이브 조회 */
+    /** 아카이브 월별 조회 */
     @Override
     @Transactional(readOnly = true)
-    public ComplimentListResponse getArchived(Long userId, int page, int size) {
-        Page<UserComplimentLog> logs = logRepo.findByUserIdAndIsArchivedTrue(userId, PageRequest.of(page, size));
+    public ComplimentListResponse getArchivedByMonth(Long userId, YearMonth ym, int page, int size) {
+        LocalDate start = ym.atDay(1);
+        LocalDate end   = ym.atEndOfMonth();
 
-        // 필요한 칭찬 id만 모아 한 번에 로드
-        List<Integer> ids = logs.stream()
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date"));
+
+        // 1) 아카이브된 로그 페이지 조회
+        Page<UserComplimentLog> logsPage = logRepo.findByUserIdAndIsArchivedTrueAndDateBetween(
+                userId, start, end, pageable
+        );
+
+        // 2) 필요한 칭찬 마스터 일괄 로딩
+        List<Integer> complIds = logsPage.stream()
                 .map(UserComplimentLog::getComplimentId)
                 .distinct()
-                .collect(Collectors.toList());
+                .toList();
 
-        Map<Integer, Compliment> complMap = complimentRepo.findAllById(ids).stream()
+        Map<Integer, Compliment> complMap = complimentRepo.findAllById(complIds).stream()
                 .collect(Collectors.toMap(Compliment::getId, Function.identity()));
 
-        List<DayComplimentDto> items = logs.stream().map(row -> {
-            Compliment c = complMap.get(row.getComplimentId());
-            if (c == null) throw new NoSuchElementException("Compliment not found: " + row.getComplimentId());
+        // 3) DTO 매핑
+        List<DayComplimentDto> rows = logsPage.stream().map(log -> {
+            Compliment c = complMap.get(log.getComplimentId());
+            if (c == null) {
+                throw new NoSuchElementException("Compliment not found: " + log.getComplimentId());
+            }
             return new DayComplimentDto(
-                    row.getDate(),
+                    log.getDate(),
                     new ComplimentDto(Math.toIntExact(c.getId()), c.getContent(), String.valueOf(c.getType())),
-                    Boolean.TRUE.equals(row.getIsRead()),
-                    Boolean.TRUE.equals(row.getIsArchived())
+                    Boolean.TRUE.equals(log.getIsRead()),
+                    Boolean.TRUE.equals(log.getIsArchived())
             );
-        }).collect(Collectors.toList());
+        }).toList();
 
-        return new ComplimentListResponse(items);
+        // 4) 응답 (기존 타입 유지)
+        return new ComplimentListResponse(rows);
     }
+
 
     /** 유저의 seed (null이면 예외) */
     private int userSeed(Long userId) {
