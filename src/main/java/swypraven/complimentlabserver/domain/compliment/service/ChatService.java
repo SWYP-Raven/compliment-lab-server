@@ -91,7 +91,7 @@ public class ChatService {
                 .toList());
 
         // 최신 메시지가 아래로 가도록 역순으로 변환
-        Collections.reverse(chatResponses);
+//        Collections.reverse(chatResponses);
 
         return ChatResponseSlice.of(chatResponses, chats.hasNext());
     }

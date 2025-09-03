@@ -2,6 +2,7 @@ package swypraven.complimentlabserver.domain.user.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import swypraven.complimentlabserver.domain.user.model.request.UpdateUserRequest;
@@ -11,7 +12,7 @@ import swypraven.complimentlabserver.domain.user.model.request.UpdateUserRequest
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "users",
+@Table(name = "users", // ← 예약어 회피
         indexes = {
                 @Index(name = "idx_users_email", columnList = "email")
         },
@@ -29,31 +30,54 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "nickname")
-    private String nickname;
+    // 닉네임: 기본값 생성 전략을 쓰지 않는다면 nullable = true 권장
+    @Column(name = "nickname", nullable = false)
+    private String nickname = "사용자";
 
-    @Column(name = "alarm", nullable = false)
+    @Column(name = "today_alarm", nullable = false)
     @JdbcTypeCode(SqlTypes.TINYINT)
-    private Boolean alarm = false;
+    private Boolean todayAlarm = false;
 
+    @Column(name = "friend_alarm", nullable = false)
+    @JdbcTypeCode(SqlTypes.TINYINT)
+    private Boolean friendAlarm = false;
+
+    @Column(name = "archive_alarm", nullable = false)
+    @JdbcTypeCode(SqlTypes.TINYINT)
+    private Boolean archiveAlarm = false;
+
+    @Column(name = "marketing_alarm", nullable = false)
+    @JdbcTypeCode(SqlTypes.TINYINT)
+    private Boolean marketingAlarm = false;
+
+    @Column(name = "event_alarm", nullable = false)
+    @JdbcTypeCode(SqlTypes.TINYINT)
+    private Boolean eventAlarm = false;
+
+
+    // 애플은 email이 없을 수 있음 → nullable = true
     @Column(name = "email", length = 191)
     private String email;
 
+    // 애플 고유 사용자 ID(고정) - 유니크
     @Column(name = "apple_sub", nullable = false, unique = true, length = 191)
     private String appleSub;
 
     @Column(name = "role", nullable = false, length = 50)
     private String role; // 예: ROLE_USER
 
-    @Column(name = "refresh_token", length = 512)
-    private String refreshToken;
-
     @Column(name = "seed", nullable = false)
     private Integer seed;
 
-    public User setRole(String role) {
-        this.role = role;
-        return this;
+    // refresh token 저장용
+    @Column(name = "refresh_token", length = 512)
+    private String refreshToken;
+
+    @PrePersist
+    private void ensureSeed() {
+        if (this.seed == null) {
+            this.seed = (int) (Math.random() * 100_000);
+        }
     }
 
     public Integer getSeed() {
@@ -64,26 +88,20 @@ public class User {
         this.seed = seed;
     }
 
-    // 선택: seed 보장
-    @PrePersist
-    private void ensureSeed() {
-        if (this.seed == null) {
-            this.seed = (int) (Math.random() * 100_000);
-        }
+    // 필요 시 편의 메서드들…
+
+    public User setRole(String role) {
+        this.role = role;
+        return this;
     }
 
-    /** 단일 alarm만 보유하므로 friendAlarm을 대표로 매핑 */
-    public User update(UpdateUserRequest request) {
-        if (request.nickname() != null) {
-            this.nickname = request.nickname();
-        }
-        if (request.friendAlarm() != null) {
-            this.alarm = request.friendAlarm();
-        }
-        // 아래 3개는 현재 엔티티에 컬럼이 없으므로 무시(확장 시 추가)
-        // if (request.archiveAlarm() != null) { ... }
-        // if (request.marketingAlarm() != null) { ... }
-        // if (request.eventAlarm() != null) { ... }
+    public User update(UpdateUserRequest updateUserRequest) {
+        this.nickname = updateUserRequest.nickname();
+        this.friendAlarm = updateUserRequest.friendAlarm();
+        this.archiveAlarm = updateUserRequest.archiveAlarm();
+        this.marketingAlarm = updateUserRequest.marketingAlarm();
+        this.eventAlarm = updateUserRequest.eventAlarm();
+
         return this;
     }
 }
