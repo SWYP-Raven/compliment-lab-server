@@ -91,22 +91,6 @@ public class User {
     }
 
 
-    public Integer getSeed() {
-        return this.seed;
-    }
-
-    public void setSeed(Integer seed) {
-        this.seed = seed;
-    }
-
-    // 선택: seed 보장
-    @PrePersist
-    private void ensureSeed() {
-        if (this.seed == null) {
-            this.seed = (int) (Math.random() * 100_000);
-        }
-    }
-
     public User update(UpdateUserRequest updateUserRequest) {
         this.nickname = updateUserRequest.nickname();
         this.friendAlarm = updateUserRequest.friendAlarm();
