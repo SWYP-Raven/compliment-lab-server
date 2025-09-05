@@ -4,7 +4,12 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import swypraven.complimentlabserver.domain.friend.entity.Friend;
+import swypraven.complimentlabserver.domain.friend.entity.UserFriendType;
 import swypraven.complimentlabserver.domain.user.model.request.UpdateUserRequest;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -67,6 +72,12 @@ public class User {
     // refresh token 저장용
     @Column(name = "refresh_token", length = 512)
     private String refreshToken;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch =  FetchType.LAZY)
+    private List<UserFriendType> friendTypes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch =  FetchType.LAZY)
+    private List<Friend> friends = new ArrayList<>();
 
     @PrePersist
     private void ensureSeed() {

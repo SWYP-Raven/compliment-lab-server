@@ -22,7 +22,6 @@ import swypraven.complimentlabserver.domain.friend.repository.ChatRepository;
 import swypraven.complimentlabserver.domain.friend.repository.FriendRepository;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
-import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
 import swypraven.complimentlabserver.global.exception.chat.ChatErrorCode;
 import swypraven.complimentlabserver.global.exception.chat.ChatException;
 import swypraven.complimentlabserver.global.exception.friend.FriendErrorCode;
@@ -38,7 +37,6 @@ import swypraven.complimentlabserver.global.exception.user.UserErrorCode;
 import swypraven.complimentlabserver.global.exception.user.UserException;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -98,8 +96,8 @@ public class ChatService {
 
 
     @Transactional
-    public void saveMessage(CustomUserDetails userDetails, Long messageId) {
-        User user = userRepository.findById(userDetails.getId())
+    public void saveMessage(Long userId, Long messageId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
         Chat chat = chatRepository.findById(messageId)
@@ -127,8 +125,8 @@ public class ChatService {
 
 
     @Transactional(readOnly = true)
-    public ChatResponseSlice findAllSavedChat(CustomUserDetails userDetails, int size, LocalDateTime lastCreatedAt) {
-        User user = userRepository.findById(userDetails.getId())
+    public ChatResponseSlice findAllSavedChat(Long userId, int size, LocalDateTime lastCreatedAt) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
         Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt"));
