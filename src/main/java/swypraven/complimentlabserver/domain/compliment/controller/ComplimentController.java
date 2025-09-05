@@ -69,14 +69,16 @@ public class ComplimentController {
         return ResponseEntity.noContent().build();
     }
 
-    /** 아카이브된 칭찬 전체 조회 (페이지네이션 권장) */
-    @GetMapping("/archived")
-    public ResponseEntity<ComplimentListResponse> getArchived(
+    /** 아카이브된 칭찬 월별 조회 */
+    @GetMapping("/archived/{yearMonth}")
+    public ResponseEntity<ComplimentListResponse> getArchivedByMonth(
             @AuthenticationPrincipal CustomUserPrincipal me,
+            @PathVariable @DateTimeFormat(pattern = "yyyy-MM") YearMonth yearMonth,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
         if (me == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        return ResponseEntity.ok(complimentService.getArchived(me.id(), page, size));
+
+        return ResponseEntity.ok(complimentService.getArchivedByMonth(me.id(), yearMonth, page, size));
     }
 }

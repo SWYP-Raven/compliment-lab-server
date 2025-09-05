@@ -14,5 +14,6 @@ import java.util.Optional;
 public interface UserComplimentLogRepository extends JpaRepository<UserComplimentLog, Long> {
     Optional<UserComplimentLog> findByUserIdAndDate(Long userId, LocalDate date);
     List<UserComplimentLog> findByUserIdAndDateIn(Long userId, Collection<LocalDate> dates);
-    Page<UserComplimentLog> findByUserIdAndIsArchivedTrue(Long userId, Pageable pageable);
+    Page<UserComplimentLog> findByUserIdAndIsArchivedTrueAndDateBetween(
+            Long userId, LocalDate start, LocalDate end, Pageable pageable);
 }

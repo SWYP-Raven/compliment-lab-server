@@ -61,12 +61,29 @@ public class User {
 
     @Column(name = "role", nullable = false, length = 50)
     private String role; // 예: ROLE_USER
+    @Column(name = "seed", nullable = false)
+    private Integer seed;
 
+    // refresh token 저장용
     @Column(name = "refresh_token", length = 512)
     private String refreshToken;
 
-    @Column(name = "seed", nullable = false)
-    private Integer seed;
+    @PrePersist
+    private void ensureSeed() {
+        if (this.seed == null) {
+            this.seed = (int) (Math.random() * 100_000);
+        }
+    }
+
+    public Integer getSeed() {
+        return this.seed;
+    }
+
+    public void setSeed(Integer seed) {
+        this.seed = seed;
+    }
+
+    // 필요 시 편의 메서드들…
 
     public User setRole(String role) {
         this.role = role;
