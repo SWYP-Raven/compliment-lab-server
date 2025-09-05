@@ -4,7 +4,11 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import swypraven.complimentlabserver.domain.friend.entity.UserFriendType;
 import swypraven.complimentlabserver.domain.user.model.request.UpdateUserRequest;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -68,6 +72,9 @@ public class User {
     @Column(name = "refresh_token", length = 512)
     private String refreshToken;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
+    private List<UserFriendType> friendTypes = new ArrayList<>();
+
     @PrePersist
     private void ensureSeed() {
         if (this.seed == null) {
@@ -90,22 +97,6 @@ public class User {
         return this;
     }
 
-
-    public Integer getSeed() {
-        return this.seed;
-    }
-
-    public void setSeed(Integer seed) {
-        this.seed = seed;
-    }
-
-    // 선택: seed 보장
-    @PrePersist
-    private void ensureSeed() {
-        if (this.seed == null) {
-            this.seed = (int) (Math.random() * 100_000);
-        }
-    }
 
     public User update(UpdateUserRequest updateUserRequest) {
         this.nickname = updateUserRequest.nickname();
