@@ -19,6 +19,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Random;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -49,9 +50,19 @@ public class ComplimentServiceImpl implements ComplimentService {
     private final UserComplimentLogRepository logRepo;
     private final UserRepository userRepo;
     private final ComplimentSequenceProvider seq; // seed 기반 순열 계산
+    
+    private static final int TYPE_COUNT = 5; //캐릭터 유형 타입 개수
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+    //타입 랜덤
+    private int deterministicType(int userSeed, LocalDate date) {
+        // 유저 seed와 날짜를 섞어 고정 시드 생성
+        long combined = ((long) userSeed << 32) ^ date.toEpochDay();
+        Random r = new Random(combined);
 
+        // 1..TYPE_COUNT 범위의 정수 반환 (DB type 이 int 라면 이게 딱 맞음)
+        return 1 + r.nextInt(TYPE_COUNT);
+    }
     /** 오늘의 칭찬 (seed 기반) */
     @Override
     @Transactional(readOnly = true)
@@ -61,21 +72,26 @@ public class ComplimentServiceImpl implements ComplimentService {
         return getTodayForUserOn(userId, today);
     }
 
-    /** (선택) 테스트/리플레이 용 날짜 고정 오버로드 - 인터페이스에 추가했다면 구현 */
+
+    @Override
     @Transactional(readOnly = true)
     public TodayDto getTodayForUserOn(Long userId, LocalDate date) {
-        int complId = seq.idFor(userSeed(userId), date);
+        int seed = userSeed(userId);
+        int complId = seq.idFor(seed, date);
 
         Compliment compl = complimentRepo.findById(complId)
                 .orElseThrow(() -> new NoSuchElementException("Compliment not found: " + complId));
 
         UserComplimentLog log = logRepo.findByUserIdAndDate(userId, date).orElse(null);
 
+        // ✅ type 을 DB값이 아니라 seed 기반 결정값으로
+        int typeForThisDay = deterministicType(seed, date);
+
         return TodayDto.of(
                 date,
-                compl.getId().longValue(),                // Integer -> Long
+                compl.getId().longValue(),
                 compl.getContent(),
-                String.valueOf(compl.getType()),
+                String.valueOf(typeForThisDay),
                 log != null && Boolean.TRUE.equals(log.getIsRead()),
                 log != null && Boolean.TRUE.equals(log.getIsArchived())
         );
@@ -95,23 +111,18 @@ public class ComplimentServiceImpl implements ComplimentService {
     @Transactional(readOnly = true)
     public ComplimentListResponse getRange(Long userId, LocalDate start, LocalDate end) {
         List<LocalDate> days = start.datesUntil(end.plusDays(1)).collect(Collectors.toList());
-
         int seed = userSeed(userId);
 
-        // 날짜별 ComplimentId 계산
         Map<LocalDate, Integer> dayToComplId = days.stream()
                 .collect(Collectors.toMap(Function.identity(), d -> seq.idFor(seed, d)));
 
-        // Compliment 묶음 조회 후 맵핑
         List<Compliment> compls = complimentRepo.findAllById(dayToComplId.values());
         Map<Integer, Compliment> complMap = compls.stream()
                 .collect(Collectors.toMap(Compliment::getId, Function.identity()));
 
-        // 로그 조회
         Map<LocalDate, UserComplimentLog> logs = logRepo.findByUserIdAndDateIn(userId, days).stream()
                 .collect(Collectors.toMap(UserComplimentLog::getDate, Function.identity()));
 
-        // 응답 조립
         List<DayComplimentDto> result = days.stream().map(d -> {
             Integer cid = dayToComplId.get(d);
             Compliment c = complMap.get(cid);
@@ -119,10 +130,14 @@ public class ComplimentServiceImpl implements ComplimentService {
                 log.warn("Compliment master missing for id={} (date={})", cid, d);
                 throw new NoSuchElementException("Compliment not found: " + cid);
             }
+
+            // ✅ 각 날짜의 type 도 seed 기반으로 고정 랜덤
+            int typeForThisDay = deterministicType(seed, d);
+
             UserComplimentLog row = logs.get(d);
             return new DayComplimentDto(
                     d,
-                    new ComplimentDto(c.getId(), c.getContent(), String.valueOf(c.getType())), // ✅ FIX
+                    new ComplimentDto(c.getId(), c.getContent(), String.valueOf(typeForThisDay)),
                     row != null && Boolean.TRUE.equals(row.getIsRead()),
                     row != null && Boolean.TRUE.equals(row.getIsArchived())
             );
@@ -130,6 +145,7 @@ public class ComplimentServiceImpl implements ComplimentService {
 
         return new ComplimentListResponse(result);
     }
+
 
     /** 상태 로그 upsert */
     @Override
