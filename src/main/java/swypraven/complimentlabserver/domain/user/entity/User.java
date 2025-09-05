@@ -30,7 +30,7 @@ public class User {
     private Long id;
 
     @Column(name = "nickname")
-    private String nickname;
+    private String nickname = "사용자";
 
     @Column(name = "today_alarm", nullable = false)
     @JdbcTypeCode(SqlTypes.TINYINT)
