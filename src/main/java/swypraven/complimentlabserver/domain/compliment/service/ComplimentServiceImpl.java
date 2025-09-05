@@ -3,6 +3,8 @@ package swypraven.complimentlabserver.domain.compliment.service;
 // Lombok / Spring
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,19 +56,27 @@ public class ComplimentServiceImpl implements ComplimentService {
     @Override
     @Transactional(readOnly = true)
     public TodayDto getTodayForUser(Long userId) {
+        // (인터페이스에 default가 있다면 여기서 위임해도 됩니다)
         LocalDate today = LocalDate.now(KST);
-        int complId = seq.idFor(userSeed(userId), today);
+        return getTodayForUserOn(userId, today);
+    }
+
+    /** (선택) 테스트/리플레이 용 날짜 고정 오버로드 - 인터페이스에 추가했다면 구현 */
+    @Transactional(readOnly = true)
+    public TodayDto getTodayForUserOn(Long userId, LocalDate date) {
+        int complId = seq.idFor(userSeed(userId), date);
+
 
         Compliment compl = complimentRepo.findById(complId)
                 .orElseThrow(() -> new NoSuchElementException("Compliment not found: " + complId));
 
-        UserComplimentLog log = logRepo.findByUserIdAndDate(userId, today).orElse(null);
+        UserComplimentLog log = logRepo.findByUserIdAndDate(userId, date).orElse(null);
 
         return TodayDto.of(
-                today,
-                compl.getId().longValue(),                // Compliment PK(Integer) → Long
+                date,
+                compl.getId().longValue(),                // Integer -> Long
                 compl.getContent(),
-                String.valueOf(compl.getType()),          // Enum이면 .name() 사용 가능
+                String.valueOf(compl.getType()),
                 log != null && Boolean.TRUE.equals(log.getIsRead()),
                 log != null && Boolean.TRUE.equals(log.getIsArchived())
         );
@@ -95,10 +105,8 @@ public class ComplimentServiceImpl implements ComplimentService {
 
         // Compliment 묶음 조회 후 맵핑
         List<Compliment> compls = complimentRepo.findAllById(dayToComplId.values());
-        // ⭐ Compliment.getId()가 Integer라면 키 타입은 Integer로!
         Map<Integer, Compliment> complMap = compls.stream()
                 .collect(Collectors.toMap(Compliment::getId, Function.identity()));
-
 
         // 로그 조회
         Map<LocalDate, UserComplimentLog> logs = logRepo.findByUserIdAndDateIn(userId, days).stream()
@@ -107,15 +115,15 @@ public class ComplimentServiceImpl implements ComplimentService {
         // 응답 조립
         List<DayComplimentDto> result = days.stream().map(d -> {
             Integer cid = dayToComplId.get(d);
-            Compliment c = complMap.get(cid); // ✅ 같은 Integer 타입
+            Compliment c = complMap.get(cid);
             if (c == null) {
                 log.warn("Compliment master missing for id={} (date={})", cid, d);
                 throw new NoSuchElementException("Compliment not found: " + cid);
             }
             UserComplimentLog row = logs.get(d);
             return new DayComplimentDto(
-                    d,  // LocalDate 그대로
-                    new ComplimentDto(Math.toIntExact(c.getId()), c.getContent(), String.valueOf(c.getType())),
+                    d,
+                    new ComplimentDto(c.getId(), c.getContent(), String.valueOf(c.getType())), // ✅ FIX
                     row != null && Boolean.TRUE.equals(row.getIsRead()),
                     row != null && Boolean.TRUE.equals(row.getIsArchived())
             );
@@ -146,33 +154,45 @@ public class ComplimentServiceImpl implements ComplimentService {
         logRepo.save(logRow);
     }
 
-    /** 아카이브 조회 */
+    /** 아카이브 월별 조회 */
     @Override
     @Transactional(readOnly = true)
-    public ComplimentListResponse getArchived(Long userId, int page, int size) {
-        Page<UserComplimentLog> logs = logRepo.findByUserIdAndIsArchivedTrue(userId, PageRequest.of(page, size));
+    public ComplimentListResponse getArchivedByMonth(Long userId, YearMonth ym, int page, int size) {
+        LocalDate start = ym.atDay(1);
+        LocalDate end   = ym.atEndOfMonth();
 
-        // 필요한 칭찬 id만 모아 한 번에 로드
-        List<Integer> ids = logs.stream()
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date"));
+
+        // 1) 아카이브된 로그 페이지 조회
+        Page<UserComplimentLog> logsPage = logRepo.findByUserIdAndIsArchivedTrueAndDateBetween(
+                userId, start, end, pageable
+        );
+
+        // 2) 필요한 칭찬 마스터 일괄 로딩
+        List<Integer> complIds = logsPage.stream()
                 .map(UserComplimentLog::getComplimentId)
                 .distinct()
-                .collect(Collectors.toList());
+                .toList();
 
-        Map<Integer, Compliment> complMap = complimentRepo.findAllById(ids).stream()
+        Map<Integer, Compliment> complMap = complimentRepo.findAllById(complIds).stream()
                 .collect(Collectors.toMap(Compliment::getId, Function.identity()));
 
-        List<DayComplimentDto> items = logs.stream().map(row -> {
-            Compliment c = complMap.get(row.getComplimentId());
-            if (c == null) throw new NoSuchElementException("Compliment not found: " + row.getComplimentId());
+        // 3) DTO 매핑
+        List<DayComplimentDto> rows = logsPage.stream().map(log -> {
+            Compliment c = complMap.get(log.getComplimentId());
+            if (c == null) {
+                throw new NoSuchElementException("Compliment not found: " + log.getComplimentId());
+            }
             return new DayComplimentDto(
-                    row.getDate(),
-                    new ComplimentDto(Math.toIntExact(c.getId()), c.getContent(), String.valueOf(c.getType())),
-                    Boolean.TRUE.equals(row.getIsRead()),
-                    Boolean.TRUE.equals(row.getIsArchived())
+                    log.getDate(),
+                    new ComplimentDto(c.getId(), c.getContent(), String.valueOf(c.getType())), // ✅ FIX
+                    Boolean.TRUE.equals(log.getIsRead()),
+                    Boolean.TRUE.equals(log.getIsArchived())
             );
-        }).collect(Collectors.toList());
+        }).toList();
 
-        return new ComplimentListResponse(items);
+        // 4) 응답
+        return new ComplimentListResponse(rows);
     }
 
     /** 유저의 seed (null이면 예외) */
