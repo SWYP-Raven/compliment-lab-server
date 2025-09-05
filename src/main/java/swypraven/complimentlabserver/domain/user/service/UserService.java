@@ -87,6 +87,11 @@ public class UserService implements UserDetailsService {
         return new UserInfoResponse(user);
     }
 
+    @Transactional
+    public void deleteUser(Long userId) {
+        userRepository.deleteById(userId);
+    }
+
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(normalizeEmail(email));
@@ -126,4 +131,5 @@ public class UserService implements UserDetailsService {
         return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
 
     }
+
 }

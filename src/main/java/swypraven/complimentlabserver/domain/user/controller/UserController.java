@@ -33,4 +33,10 @@ public class UserController {
         UserInfoResponse userInfo = userService.getUserInfo(me.id());
         return ResponseEntity.ok(ApiResponse.success(userInfo, "200","조회 성공"));
     }
+
+    @DeleteMapping
+    public ResponseEntity<?> deleteUser(@AuthenticationPrincipal CustomUserPrincipal me) {
+        userService.deleteUser(me.id());
+        return ResponseEntity.ok().build();
+    }
 }

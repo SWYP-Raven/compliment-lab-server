@@ -23,7 +23,8 @@ public class UserFriendType {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL) // 모든 cascade 적용
+    @JoinColumn(name = "user_id")
     private User user;
 
     @ManyToOne
