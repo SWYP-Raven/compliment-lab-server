@@ -78,6 +78,7 @@ public class ComplimentController {
             @RequestParam(defaultValue = "20") int size
     ) {
         if (me == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
         return ResponseEntity.ok(complimentService.getArchivedByMonth(me.id(), yearMonth, page, size));
     }
 }
