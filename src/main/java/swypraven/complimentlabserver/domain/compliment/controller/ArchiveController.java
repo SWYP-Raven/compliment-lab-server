@@ -19,69 +19,43 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 @RequestMapping("/archive")
 public class ArchiveController {
-    /**
-     * 아카이브 관련 API를 제공하는 컨트롤러
-     * 오늘의 칭찬과 대화 문장 아카이브 기능을 담당
-     */
+
     private final ArchiveService archiveService;
 
+    // ===================== 오늘의 칭찬 (seed 기반) =====================
+
     /**
-     * 오늘의 칭찬을 아카이브에 저장
+     * 오늘의 칭찬을 아카이브에 저장 (seed 기반으로 이미 생성된 문장을 보존)
      *
-     * @param me 인증된 사용자 정보
-     * @param req 저장할 오늘의 칭찬 ID를 포함한 요청 객체
-     * @return 저장된 오늘의 칭찬 아카이브 아이템
+     * @param me  인증 사용자
+     * @param req seed 및 생성 결과(텍스트)와 메타데이터
      */
     @PostMapping("/today")
     public ResponseEntity<TodayArchiveItem> saveToday(
             @AuthenticationPrincipal CustomUserPrincipal me,
-            @Valid @RequestBody SaveTodayRequest req) {
-        TodayArchiveItem saved = archiveService.saveToday(me.id(), req.getTodayId());
+            @Valid @RequestBody SaveTodayBySeedRequest req
+    ) {
+        // 생성은 외부 서비스에서 끝났다는 가정: 여기서는 보존만
+        TodayArchiveItem saved = archiveService.saveTodayBySeed(me.id(), req);
         return ResponseEntity.ok(saved);
     }
+
     /**
-     * 사용자의 오늘의 칭찬 아카이브 목록 조회 (페이징 처리)
-     *
-     * @param me 인증된 사용자 정보
-     * @param page 페이지 번호 (기본값: 0)
-     * @param size 페이지 크기 (기본값: 20)
-     * @return 페이징된 오늘의 칭찬 아카이브 목록
+     * 오늘의 칭찬 목록 조회 (내 것)
      */
     @GetMapping("/today")
     public ResponseEntity<PageResponse<TodayArchiveItem>> listToday(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size
+    ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<TodayArchiveItem> result = archiveService.listToday(me.id(), pageable);
         return ResponseEntity.ok(PageResponse.from(result));
     }
-    /**
-     * 특정 오늘의 칭찬 아카이브 삭제
-     *
-     * @param me 인증된 사용자 정보
-     * @param id 삭제할 아카이브 아이템 ID
-     * @return 204 No Content 응답
-     */
-    @DeleteMapping("/today/{id}")
-    public ResponseEntity<Void> deleteToday(
-            @AuthenticationPrincipal CustomUserPrincipal me,
-            @PathVariable Long id) {
-        archiveService.removeToday(me.id(), id);
-        return ResponseEntity.noContent().build();
-    }
 
     /**
-     * 오늘의 칭찬 히스토리 조회 (과거~오늘까지, 미래 제외)
-     * 특정 사용자의 히스토리 또는 본인 히스토리를 날짜 범위로 필터링하여 조회
-     *
-     * @param me 인증된 사용자 정보
-     * @param userId 조회할 사용자 ID (null이면 본인)
-     * @param from 시작 날짜 (null 허용)
-     * @param to 종료 날짜 (null이면 오늘까지)
-     * @param page 페이지 번호 (기본값: 0)
-     * @param size 페이지 크기 (기본값: 20)
-     * @return 조건에 맞는 오늘의 칭찬 아카이브 목록
+     * 과거~오늘까지 히스토리 조회(미래 제외), 본인 또는 특정 userId
      */
     @GetMapping("/today/history")
     public ResponseEntity<PageResponse<TodayArchiveItem>> listTodayHistory(
@@ -94,63 +68,62 @@ public class ArchiveController {
     ) {
         Long targetUserId = (userId != null ? userId : me.id());
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-
-        LocalDate toOrToday = (to != null ? to : LocalDate.now()); // 오늘 포함, 미래 제외
-
-        Page<TodayArchiveItem> result = archiveService.listTodayByUser(
-                targetUserId, from, toOrToday, pageable
-        );
+        LocalDate toOrToday = (to != null ? to : LocalDate.now());
+        Page<TodayArchiveItem> result = archiveService.listTodayByUser(targetUserId, from, toOrToday, pageable);
         return ResponseEntity.ok(PageResponse.from(result));
     }
 
-    // ===== 대화 카드 관련 API =====
+    /**
+     * 특정 오늘의 칭찬 삭제
+     */
+    @DeleteMapping("/today/{id}")
+    public ResponseEntity<Void> deleteToday(
+            @AuthenticationPrincipal CustomUserPrincipal me,
+            @PathVariable Long id
+    ) {
+        archiveService.removeToday(me.id(), id);
+        return ResponseEntity.noContent().build();
+    }
+
+
+    // ===================== 대화 카드(문장 보존, seed 메타 포함 가능) =====================
 
     /**
-     * 대화 카드를 아카이브에 저장
-     * 텍스트 중심
-     * @param me 인증된 사용자 정보
-     * @param req 저장할 대화 카드 정보 (채팅 ID, 제목, 내용, 메타데이터)
-     * @return 저장된 대화 카드 아카이브 아이템
+     * 대화 중 마음에 드는 문장을 아카이브로 저장
+     * (title/content/meta → message/role/seed/model/temperature/styleId 중심으로 변경)
      */
     @PostMapping("/chat-cards")
     public ResponseEntity<ChatCardArchiveItem> saveChatCard(
             @AuthenticationPrincipal CustomUserPrincipal me,
-            @Valid @RequestBody SaveChatCardRequest req) {
-        ChatCardArchiveItem saved = archiveService.saveChatCard(
-                me.id(), req.getChatId(), req.getTitle(), req.getContent(), req.getMeta()
-        );
+            @Valid @RequestBody SaveChatCardBySeedRequest req
+    ) {
+        ChatCardArchiveItem saved = archiveService.saveChatCardBySeed(me.id(), req);
         return ResponseEntity.ok(saved);
     }
+
     /**
-     * 사용자의 대화 카드 아카이브 목록 조회 (검색 및 페이징 처리)
-     *
-     * @param me 인증된 사용자 정보
-     * @param q 검색 쿼리 (제목이나 내용에서 검색, null 허용)
-     * @param page 페이지 번호 (기본값: 0)
-     * @param size 페이지 크기 (기본값: 20)
-     * @return 페이징된 대화 카드 아카이브 목록
+     * 대화 카드 목록(검색/페이징)
      */
     @GetMapping("/chat-cards")
     public ResponseEntity<PageResponse<ChatCardArchiveItem>> listChatCards(
             @AuthenticationPrincipal CustomUserPrincipal me,
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size
+    ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<ChatCardArchiveItem> result = archiveService.listChatCards(me.id(), q, pageable);
         return ResponseEntity.ok(PageResponse.from(result));
     }
+
     /**
-     * 특정 대화 카드 아카이브 삭제
-     *
-     * @param me 인증된 사용자 정보
-     * @param id 삭제할 대화 카드 아카이브 ID
-     * @return 204 No Content 응답
+     * 대화 카드 삭제
      */
     @DeleteMapping("/chat-cards/{id}")
     public ResponseEntity<Void> deleteChatCard(
             @AuthenticationPrincipal CustomUserPrincipal me,
-            @PathVariable Long id) {
+            @PathVariable Long id
+    ) {
         archiveService.removeChatCard(me.id(), id);
         return ResponseEntity.noContent().build();
     }

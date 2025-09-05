@@ -91,11 +91,10 @@ public class ChatService {
                 .toList());
 
         // 최신 메시지가 아래로 가도록 역순으로 변환
-        Collections.reverse(chatResponses);
+//        Collections.reverse(chatResponses);
 
         return ChatResponseSlice.of(chatResponses, chats.hasNext());
     }
-
 
 
     @Transactional
@@ -106,18 +105,25 @@ public class ChatService {
         Chat chat = chatRepository.findById(messageId)
                 .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_FOUND));
 
+        // 사용자 메시지는 저장 금지
         if (chat.getRole() == RoleType.USER) {
             throw new ChatException(ChatErrorCode.INVALID_SAVE_ROLE_TYPE);
         }
 
-        // 카드 제목/본문/메타로 저장 (본문은 원문 대화 메시지를 기본값으로)
-        String title = null; // 필요시 클라이언트에서 받아도 됨
-        String content = chat.getMessage(); // 원문 대화 내용을 본문 기본값으로
-        Map<String, Object> meta = Map.of(); // 필요 없으면 빈 맵
+        // seed 기반 엔티티 팩토리 사용 (옵션들은 일단 null)
+        // seed 기반 엔티티 팩토리 사용 (옵션들은 일단 null)
+        ChatCompliment entity = ChatCompliment.of(
+                user,
+                chat,
+                chat.getMessage(),     // message
+                chat.getRole().name(), // role: "ASSISTANT"
+                null,                  // seed
+                null                   // metaJson
+        );
 
-        ChatCompliment entity = ChatCompliment.of(user, chat, title, content, meta);
         chatComplimentRepository.save(entity);
     }
+
 
 
     @Transactional(readOnly = true)
