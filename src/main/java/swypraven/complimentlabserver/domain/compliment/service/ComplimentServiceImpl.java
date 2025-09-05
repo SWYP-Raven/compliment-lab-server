@@ -66,6 +66,7 @@ public class ComplimentServiceImpl implements ComplimentService {
     public TodayDto getTodayForUserOn(Long userId, LocalDate date) {
         int complId = seq.idFor(userSeed(userId), date);
 
+
         Compliment compl = complimentRepo.findById(complId)
                 .orElseThrow(() -> new NoSuchElementException("Compliment not found: " + complId));
 
