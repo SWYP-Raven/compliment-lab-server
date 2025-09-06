@@ -16,6 +16,11 @@ import swypraven.complimentlabserver.domain.friend.entity.Chat;
 import swypraven.complimentlabserver.domain.friend.repository.ChatRepository;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
+import swypraven.complimentlabserver.global.exception.archive.ArchiveErrorCode;
+import swypraven.complimentlabserver.global.exception.archive.ArchiveException;
+import swypraven.complimentlabserver.global.exception.chat.ChatException;
+import swypraven.complimentlabserver.global.exception.user.UserErrorCode;
+import swypraven.complimentlabserver.global.exception.user.UserException;
 
 import java.time.*;
 import java.util.Objects;
@@ -37,17 +42,14 @@ public class ArchiveServiceImpl implements ArchiveService {
     public TodayArchiveItem saveToday(
             Long userId,
             String text,
-            Long seed,
-            String model,
-            Double temperature,
-            String styleId
+            Long seed
     ) {
         if (text == null || text.isBlank()) {
-            throw new IllegalArgumentException("text는 비어 있을 수 없습니다.");
+            throw new ArchiveException(ArchiveErrorCode.MESSAGE_EMPTY);
         }
 
         User user = userRepo.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
         SavedTodayCompliment saved = SavedTodayCompliment.builder()
                 .user(user)
@@ -65,11 +67,11 @@ public class ArchiveServiceImpl implements ArchiveService {
     public TodayArchiveItem saveTodayBySeed(Long userId, ArchiveRequests.SaveTodayBySeedRequest req) {
         String text = req.getText();
         if (text == null || text.isBlank()) {
-            throw new IllegalArgumentException("text는 비어 있을 수 없습니다.");
+            throw new ArchiveException(ArchiveErrorCode.TEXT_EMPTY);
         }
 
         User user = userRepo.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new ArchiveException(ArchiveErrorCode.USER_NOT_FOUND));
 
         SavedTodayCompliment saved = SavedTodayCompliment.builder()
                 .user(user)
@@ -85,21 +87,23 @@ public class ArchiveServiceImpl implements ArchiveService {
     @Transactional
     public ChatCardArchiveItem saveChatCardBySeed(Long userId, ArchiveRequests.SaveChatCardBySeedRequest req) {
         if (req.getMessage() == null || req.getMessage().isBlank()) {
-            throw new IllegalArgumentException("message는 비어 있을 수 없습니다.");
+            throw new ArchiveException(ArchiveErrorCode.MESSAGE_EMPTY);
         }
         if (req.getRole() == null || req.getRole().isBlank()) {
-            throw new IllegalArgumentException("role은 비어 있을 수 없습니다.");
+            throw new ArchiveException(ArchiveErrorCode.ROLE_EMPTY);
         }
 
         User user = userRepo.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new ArchiveException(ArchiveErrorCode.USER_NOT_FOUND));
         Chat chat = chatRepo.findById(req.getChatId())
-                .orElseThrow(() -> new IllegalArgumentException("Chat not found"));
+                .orElseThrow(() -> new ArchiveException(ArchiveErrorCode.CHAT_NOT_FOUND));
 
         // 소유권 체크
-        if (!Objects.equals(chat.getFriend().getUser().getId(), userId)) {
-            throw new IllegalArgumentException("You cannot archive someone else's chat.");
+        if (chat.getFriend() == null || chat.getFriend().getUser() == null
+                || !Objects.equals(chat.getFriend().getUser().getId(), userId)) {
+            throw new ArchiveException(ArchiveErrorCode.CHAT_NOT_FOUND_OR_FORBIDDEN);
         }
+
 
 
         ChatCompliment entity = ChatCompliment.builder()
@@ -125,7 +129,7 @@ public class ArchiveServiceImpl implements ArchiveService {
     @Transactional
     public void removeToday(Long userId, Long savedId) {
         int deleted = savedTodayRepo.deleteByUserIdAndId(userId, savedId);
-        if (deleted == 0) throw new IllegalArgumentException("삭제할 항목이 없거나 권한이 없습니다.");
+        if (deleted == 0) throw new ArchiveException(ArchiveErrorCode.TODAY_NOT_FOUND_OR_FORBIDDEN);
     }
 
     @Transactional
@@ -138,20 +142,22 @@ public class ArchiveServiceImpl implements ArchiveService {
             String metaJson
     ) {
         if (message == null || message.isBlank()) {
-            throw new IllegalArgumentException("message는 비어 있을 수 없습니다.");
+            throw new ArchiveException(ArchiveErrorCode.MESSAGE_EMPTY);
         }
         if (role == null || role.isBlank()) {
-            throw new IllegalArgumentException("role은 비어 있을 수 없습니다.");
+            throw new ArchiveException(ArchiveErrorCode.ROLE_EMPTY);
         }
 
         User user = userRepo.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new ArchiveException(ArchiveErrorCode.USER_NOT_FOUND));
         Chat chat = chatRepo.findById(chatId)
-                .orElseThrow(() -> new IllegalArgumentException("Chat not found"));
+                .orElseThrow(() -> new ArchiveException(ArchiveErrorCode.CHAT_NOT_FOUND));
 
-        if (!Objects.equals(chat.getFriend().getUser().getId(), userId)) {
-            throw new IllegalArgumentException("You cannot archive someone else's chat.");
+        if (chat.getFriend() == null || chat.getFriend().getUser() == null
+                || !Objects.equals(chat.getFriend().getUser().getId(), userId)) {
+            throw new ArchiveException(ArchiveErrorCode.CHAT_NOT_FOUND_OR_FORBIDDEN);
         }
+
 
         ChatCompliment entity = ChatCompliment.builder()
                 .user(user)
@@ -180,7 +186,7 @@ public class ArchiveServiceImpl implements ArchiveService {
     @Transactional
     public void removeChatCard(Long userId, Long cardId) {
         int deleted = chatComplimentRepo.deleteByUserIdAndId(userId, cardId);
-        if (deleted == 0) throw new IllegalArgumentException("삭제할 카드가 없거나 권한이 없습니다.");
+        if (deleted == 0) throw new ArchiveException(ArchiveErrorCode.CARD_NOT_FOUND_OR_FORBIDDEN);
     }
 
     // ===== 유저별 과거~오늘 조회(미래 제외, 오늘 포함) =====
