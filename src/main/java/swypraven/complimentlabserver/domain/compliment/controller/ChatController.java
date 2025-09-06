@@ -5,6 +5,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import swypraven.complimentlabserver.domain.compliment.model.dto.ChatResponse;
 import swypraven.complimentlabserver.domain.compliment.model.dto.ChatResponseSlice;
 import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
 import swypraven.complimentlabserver.domain.compliment.model.response.ResponseMessage;
@@ -25,8 +26,8 @@ public class ChatController {
     private final ChatService chatService;
 
     @PostMapping("/{friendId}")
-    public ResponseEntity<ApiResponse<ResponseMessage>> sendMessage(@PathVariable Long friendId, @RequestBody RequestMessage requestMessage) {
-        ResponseMessage response = chatService.send(friendId, requestMessage);
+    public ResponseEntity<ApiResponse<ChatResponse>> sendMessage(@PathVariable Long friendId, @RequestBody RequestMessage requestMessage) {
+        ChatResponse response = chatService.send(friendId, requestMessage);
         return ResponseEntity.status(201).body(ApiResponse.success(response, "201", "성공"));
     }
 

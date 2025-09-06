@@ -58,7 +58,7 @@ public class ChatService {
     }
 
     @Transactional
-    public ResponseMessage send(Long friendId, RequestMessage requestMessage) {
+    public ChatResponse send(Long friendId, RequestMessage requestMessage) {
         // 친구 정보
         Friend friend = friendRepository.findById(friendId)
                 .orElseThrow(() -> new FriendException(FriendErrorCode.NOT_FOUND_FRIEND));
@@ -79,8 +79,7 @@ public class ChatService {
 
         chatRepository.save(chat);
         Chat savedChat = chatRepository.save(responseChat);
-
-        return new ResponseMessage(chatResponse.getMessage(), savedChat.getCreatedAt());
+        return new ChatResponse(savedChat);
     }
 
     @Transactional(readOnly = true)
