@@ -10,10 +10,13 @@ public class ErrorResponse {
     private final String code;
     private final String message;
 
-    public static ApiResponse<?> from(ErrorCode errorCode) {
-        return ApiResponse.builder()
-                .code(errorCode.getCode())
-                .message(errorCode.getMessage())
-                .build();
+    /** ErrorCode 기반 생성 */
+    public static ErrorResponse from(ErrorCode errorCode) {
+        return new ErrorResponse(errorCode.getCode(), errorCode.getMessage());
+    }
+
+    /** 간단히 코드 + 메시지로 직접 생성 */
+    public static ErrorResponse simple(String code, String message) {
+        return new ErrorResponse(code, message);
     }
 }

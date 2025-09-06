@@ -2,20 +2,11 @@ package swypraven.complimentlabserver.domain.compliment.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import swypraven.complimentlabserver.domain.friend.entity.Chat;
 import swypraven.complimentlabserver.domain.user.entity.User;
 
-import java.util.Map;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.springframework.data.annotation.CreatedDate;
+import java.time.Instant;
 
-import java.time.LocalDateTime;
-
-// 카드 아카이브: 이미지 기반
 @Getter
 @Setter
 @EqualsAndHashCode(of = "id")
@@ -27,15 +18,11 @@ import java.time.LocalDateTime;
         name = "chat_compliment",
         schema = "compliment_lab",
         indexes = {
-                @Index(name = "ix_chat_comp_user_created", columnList = "user_id, created_at")}
+                @Index(name = "ix_chat_comp_user_created", columnList = "user_id, created_at")
+        }
 )
 public class ChatCompliment {
 
-    public ChatCompliment(User user, Chat chat) {
-        this.user = user;
-        this.chat = chat;
-    }
-  
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -43,43 +30,56 @@ public class ChatCompliment {
 
     /** 카드가 만들어진 원본 대화 */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "chat_id")
+    @JoinColumn(name = "chat_id", nullable = false)
     private Chat chat;
 
+    /** 소유 유저 */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    /** 공개 URL (S3 등) */
-    @Column(name = "image_url", length = 512)
-    private String imageUrl;
+    /** 저장할 문장 (필수) */
+    @Column(name = "message", nullable = false, columnDefinition = "text")
+    private String message;
 
-    /** 썸네일(옵션) */
-    @Column(name = "thumb_url", length = 512)
-    private String thumbUrl;
+    /** 원문 역할 (USER | ASSISTANT 등) */
+    @Column(name = "role", length = 20, nullable = false)
+    private String role;
 
-    /** 렌더링 옵션(폰트/컬러/캔버스 크기 등) */
-    @JdbcTypeCode(SqlTypes.JSON) // Hibernate 6 + MySQL 8 JSON 컬럼
-    @Column(name = "payload", columnDefinition = "json")
-    private Map<String, Object> payload;
+    /** 생성 파라미터들(선택) */
+    @Column(name = "seed")
+    private Long seed;
 
-    @CreatedDate
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-  
+    /** 추가 옵션(JSON 문자열) */
+    @Column(name = "meta_json", columnDefinition = "json")
+    private String metaJson;
+
+    /** 생성 시각(UTC) */
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+
     @PrePersist
     void prePersist() {
-        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (createdAt == null) createdAt = Instant.now();
     }
 
-    // 원하면 빌더 대신 사용 가능한 팩토리 메서드
-    public static ChatCompliment of(User user, Chat chat, String imageUrl, String thumbUrl, Map<String, Object> payload) {
+    /** 팩토리 메서드 (seed 기반) */
+    public static ChatCompliment of(
+            User user,
+            Chat chat,
+            String message,
+            String role,
+            Long seed,
+            String metaJson
+    ) {
         return ChatCompliment.builder()
                 .user(user)
                 .chat(chat)
-                .imageUrl(imageUrl)
-                .thumbUrl(thumbUrl)
-                .payload(payload)
+                .message(message)
+                .role(role)
+                .seed(seed)
+                .metaJson(metaJson)
                 .build();
     }
 }

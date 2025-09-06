@@ -6,6 +6,7 @@ import swypraven.complimentlabserver.domain.compliment.entity.ChatCompliment;
 import swypraven.complimentlabserver.domain.friend.entity.Chat;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Getter
 public class ChatResponse {
@@ -20,7 +21,7 @@ public class ChatResponse {
 
     public ChatResponse(ChatCompliment chatCompliment) {
         this.id = chatCompliment.getChat().getId();
-        this.time = chatCompliment.getCreatedAt();
+        this.time = LocalDateTime.ofInstant(chatCompliment.getCreatedAt(), ZoneId.systemDefault());
         this.message = chatCompliment.getChat().getMessage();
         this.name = chatCompliment.getChat().getFriend().getName();
         this.role = chatCompliment.getChat().getRole();

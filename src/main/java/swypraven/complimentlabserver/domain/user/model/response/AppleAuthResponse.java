@@ -11,18 +11,13 @@ import swypraven.complimentlabserver.global.auth.jwt.JwtToken;
 @AllArgsConstructor
 public class AppleAuthResponse {
 
-    // 로그인
-    public AppleAuthResponse(JwtToken token, FindOrCreateAppleUserDto findOrCreateResponse) {
-        this.userId = findOrCreateResponse.getUser().getId();
-        this.isSignup = findOrCreateResponse.getIsSignUp();
+
+    public AppleAuthResponse(FindOrCreateAppleUserDto dto, JwtToken token) {
+        this.userId = dto.getUser().getId();
         this.accessToken = token.accessToken();
         this.refreshToken = token.refreshToken();
-    }
+        this.isSignup = dto.getIsSignUp();
 
-    // 회원 가입
-    public AppleAuthResponse(FindOrCreateAppleUserDto findOrCreateResponse) {
-        this.userId = findOrCreateResponse.getUser().getId();
-        this.isSignup = findOrCreateResponse.getIsSignUp();
     }
 
     private Long userId;

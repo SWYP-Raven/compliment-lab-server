@@ -8,12 +8,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
 import swypraven.complimentlabserver.global.exception.auth.AuthErrorCode;
 import swypraven.complimentlabserver.global.exception.auth.AuthException;
 
@@ -24,14 +26,15 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class  JwtAuthenticationFilter extends OncePerRequestFilter {
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     // 문자열 기반 화이트리스트 (와일드카드 포함 가능)
     private static final List<String> EXCLUDED_PATHS = Arrays.asList(
-            "/auth/apple",
+            "/auth/apple/login",
+            "/auth/apple/signup",
             "/auth/token/refresh",
             "/actuator/",
             "/swagger-ui/",
@@ -77,7 +80,7 @@ public class  JwtAuthenticationFilter extends OncePerRequestFilter {
             Authentication authentication = jwtTokenProvider.getAuthentication(token);
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        } catch (Exception e) {
+        } catch (Exception | JwtTokenProvider.InvalidJwtTokenException e) {
             log.warn("JWT 처리 중 예외 발생: {}", e.getMessage());
             // response.write 대신 예외를 던져서 EntryPoint로 위임
             throw new AuthException(AuthErrorCode.TOKEN_INVALID);

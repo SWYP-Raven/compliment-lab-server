@@ -9,7 +9,4 @@ public class AuthException extends DomainException {
         super(errorCode);
     }
 
-    public AuthException(AuthErrorCode errorCode, String message) {
-        super(errorCode);
-    }
 }
