@@ -3,6 +3,7 @@ package swypraven.complimentlabserver.domain.friend.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import swypraven.complimentlabserver.domain.friend.model.request.RequestCreateFriend;
 import swypraven.complimentlabserver.domain.friend.model.request.RequestUpdateFriend;

@@ -18,6 +18,7 @@ import swypraven.complimentlabserver.domain.compliment.model.response.ResponseMe
 import swypraven.complimentlabserver.domain.compliment.repository.ChatComplimentRepository;
 import swypraven.complimentlabserver.domain.friend.entity.Chat;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
+import swypraven.complimentlabserver.domain.friend.model.dto.LastMessageDto;
 import swypraven.complimentlabserver.domain.friend.repository.ChatRepository;
 import swypraven.complimentlabserver.domain.friend.repository.FriendRepository;
 import swypraven.complimentlabserver.domain.user.entity.User;
@@ -51,6 +52,12 @@ public class ChatService {
 
 
     @Transactional
+    public LastMessageDto createUser(String message, Friend friend) {
+        Chat chat = chatRepository.save(new Chat(message, RoleType.ASSISTANT, friend));
+        return new LastMessageDto(chat.getMessage(), chat.getCreatedAt());
+    }
+
+    @Transactional
     public ResponseMessage send(Long friendId, RequestMessage requestMessage) {
         // 친구 정보
         Friend friend = friendRepository.findById(friendId)
@@ -71,9 +78,9 @@ public class ChatService {
         Chat responseChat = new Chat(chatResponse.getMessage(), RoleType.ASSISTANT, friend);
 
         chatRepository.save(chat);
-        chatRepository.save(responseChat);
+        Chat savedChat = chatRepository.save(responseChat);
 
-        return new ResponseMessage(chatResponse.getMessage());
+        return new ResponseMessage(chatResponse.getMessage(), savedChat.getCreatedAt());
     }
 
     @Transactional(readOnly = true)
@@ -97,6 +104,8 @@ public class ChatService {
 
     @Transactional
     public void saveMessage(Long userId, Long messageId) {
+
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 

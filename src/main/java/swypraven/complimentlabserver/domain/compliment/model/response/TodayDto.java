@@ -24,6 +24,7 @@ public class TodayDto {
     private final String message;
 
     @Schema(description = "칭찬 타입", example = "과정")
+    @JsonProperty("type_id")
     private final String type;
 
     @JsonProperty("is_read")

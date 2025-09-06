@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
+import swypraven.complimentlabserver.domain.friend.model.dto.LastMessageDto;
+
+import java.time.LocalDateTime;
 
 @Getter
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -15,14 +18,12 @@ public class ResponseFriend {
     @JsonProperty("name")
     private String name;
 
-    @JsonProperty("type_name")
-    private String typeName;
 
     @JsonProperty("type_id")
-    private Long typeId;
+    private String typeId;
 
     @JsonProperty("last_message")
-    private String lastMessage;
+    private LastMessageDto lastMessage;
 
     @JsonProperty("is_first")
     private Boolean isFirst;
@@ -30,23 +31,21 @@ public class ResponseFriend {
     public ResponseFriend(Friend friend) {
         this.id = friend.getId();
         this.name = friend.getName();
-        this.typeName =  friend.getType().getName();
-        this.typeId = friend.getType().getId();
+        this.typeId = friend.getType().getId().toString();
     }
 
-    public ResponseFriend(Friend friend, Boolean isFirst) {
+    public ResponseFriend(Friend friend, Boolean isFirst, LastMessageDto lastMessageDto) {
         this.id = friend.getId();
         this.name = friend.getName();
-        this.typeName =  friend.getType().getName();
-        this.typeId = friend.getType().getId();
+        this.typeId = friend.getType().getId().toString();
         this.isFirst = isFirst;
+        this.lastMessage = lastMessageDto;
     }
 
-    public ResponseFriend(Friend friend, String lastMessage) {
+    public ResponseFriend(Friend friend, String lastMessage, LocalDateTime time) {
         this.id = friend.getId();
         this.name = friend.getName();
-        this.typeName =  friend.getType().getName();
-        this.typeId = friend.getType().getId();
-        this.lastMessage = lastMessage;
+        this.typeId = friend.getType().getId().toString();
+        this.lastMessage = new  LastMessageDto(lastMessage, time);
     }
 }
