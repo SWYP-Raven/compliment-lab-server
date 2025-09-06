@@ -4,6 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import swypraven.complimentlabserver.domain.compliment.repository.ComplimentRepository;
+import swypraven.complimentlabserver.global.exception.archive.ArchiveErrorCode;
+import swypraven.complimentlabserver.global.exception.archive.ArchiveException;
+import swypraven.complimentlabserver.global.exception.compliment.ComplimentCode;
+import swypraven.complimentlabserver.global.exception.compliment.ComplimentException;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -60,8 +64,9 @@ public class ComplimentSequenceProviderImpl implements ComplimentSequenceProvide
 
         List<Integer> allIds = complimentRepository.findAllIdsSorted();
         if (allIds == null || allIds.isEmpty()) {
-            throw new IllegalStateException("Compliment master is empty. Seed compliments before use.");
+            throw new ComplimentException(ComplimentCode.MASTER_EMPTY);
         }
+
         this.baseIds = allIds.stream().mapToInt(Integer::intValue).toArray();
         this.totalCount = baseIds.length;
         this.cache.clear();

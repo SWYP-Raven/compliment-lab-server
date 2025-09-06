@@ -40,6 +40,8 @@ import swypraven.complimentlabserver.domain.user.repository.UserRepository;
 
 // Domain - sequence
 import swypraven.complimentlabserver.domain.compliment.sequence.ComplimentSequenceProvider;
+import swypraven.complimentlabserver.global.exception.archive.ArchiveErrorCode;
+import swypraven.complimentlabserver.global.exception.archive.ArchiveException;
 
 @Slf4j
 @Service
@@ -80,7 +82,7 @@ public class ComplimentServiceImpl implements ComplimentService {
         int complId = seq.idFor(seed, date);
 
         Compliment compl = complimentRepo.findById(complId)
-                .orElseThrow(() -> new NoSuchElementException("Compliment not found: " + complId));
+                .orElseThrow(() -> new ArchiveException(ArchiveErrorCode.TODAY_NOT_FOUND));
 
         UserComplimentLog log = logRepo.findByUserIdAndDate(userId, date).orElse(null);
 
@@ -128,8 +130,7 @@ public class ComplimentServiceImpl implements ComplimentService {
             Compliment c = complMap.get(cid);
             if (c == null) {
                 log.warn("Compliment master missing for id={} (date={})", cid, d);
-                throw new NoSuchElementException("Compliment not found: " + cid);
-            }
+                throw new ArchiveException(ArchiveErrorCode.TODAY_NOT_FOUND);            }
 
             // ✅ 각 날짜의 type 도 seed 기반으로 고정 랜덤
 //            int typeForThisDay = deterministicType(seed, d);
@@ -196,7 +197,7 @@ public class ComplimentServiceImpl implements ComplimentService {
         List<DayComplimentDto> rows = logsPage.stream().map(log -> {
             Compliment c = complMap.get(log.getComplimentId());
             if (c == null) {
-                throw new NoSuchElementException("Compliment not found: " + log.getComplimentId());
+                throw new ArchiveException(ArchiveErrorCode.TODAY_NOT_FOUND);
             }
             return new DayComplimentDto(
                     log.getDate(),
@@ -215,9 +216,11 @@ public class ComplimentServiceImpl implements ComplimentService {
         return userRepo.findById(userId)
                 .map(u -> {
                     Integer seed = u.getSeed();
-                    if (seed == null) throw new NoSuchElementException("User seed is null: " + userId);
+                    if (seed == null) {
+                        throw new ArchiveException(ArchiveErrorCode.USER_NOT_FOUND);
+                    }
                     return seed;
                 })
-                .orElseThrow(() -> new NoSuchElementException("User not found: " + userId));
+                .orElseThrow(() -> new ArchiveException(ArchiveErrorCode.USER_NOT_FOUND));
     }
 }
