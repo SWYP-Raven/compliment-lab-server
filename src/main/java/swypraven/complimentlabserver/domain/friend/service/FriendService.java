@@ -10,6 +10,7 @@ import swypraven.complimentlabserver.domain.compliment.service.ChatService;
 import swypraven.complimentlabserver.domain.compliment.service.ComplimentTypeService;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
 import swypraven.complimentlabserver.domain.friend.entity.UserFriendType;
+import swypraven.complimentlabserver.domain.friend.model.dto.LastMessageDto;
 import swypraven.complimentlabserver.domain.friend.model.request.RequestCreateFriend;
 import swypraven.complimentlabserver.domain.friend.model.request.RequestUpdateFriend;
 import swypraven.complimentlabserver.domain.friend.model.response.ResponseFriend;
@@ -40,7 +41,7 @@ public class FriendService {
 
         User user = userRepository.findById(userId).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
-        TypeCompliment type = complimentTypeService.getType(request.getFriendType());
+        TypeCompliment type = complimentTypeService.getTypeById(Long.parseLong(request.getFriendType()));
 
         if(friendRepository.existsByUserAndType(user, type)) {
             throw new FriendException(FriendErrorCode.EXIST_FRIEND);
@@ -51,7 +52,9 @@ public class FriendService {
 
         boolean isFirst = !userFriendTypeRepository.existsByUserAndTypeCompliment(user, savedFriend.getType());
 
-        return new ResponseFriend(savedFriend, isFirst);
+        LastMessageDto lastMessageDto = chatService.createUser("안녕하세요. 반가워요!!", savedFriend);
+
+        return new ResponseFriend(savedFriend, isFirst, lastMessageDto);
     }
 
 
@@ -62,7 +65,7 @@ public class FriendService {
 
         return friends.stream().map(friend -> {
             ChatResponse lastChat = chatService.findLastChats(friend);
-            return new ResponseFriend(friend, lastChat.getMessage());
+            return new ResponseFriend(friend, lastChat.getMessage(), lastChat.getTime());
         }).toList();
     }
 
