@@ -79,7 +79,6 @@ public class ChatService {
 
         chatRepository.save(chat);
         Chat savedChat = chatRepository.save(responseChat);
-
         return new ChatResponse(savedChat);
     }
 
