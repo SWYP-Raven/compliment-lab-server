@@ -134,7 +134,6 @@ public class ComplimentServiceImpl implements ComplimentService {
 
             // ✅ 각 날짜의 type 도 seed 기반으로 고정 랜덤
 //            int typeForThisDay = deterministicType(seed, d);
-
             UserComplimentLog row = logs.get(d);
             return new DayComplimentDto(
                     d,
