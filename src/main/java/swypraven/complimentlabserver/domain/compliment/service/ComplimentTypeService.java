@@ -12,8 +12,8 @@ import swypraven.complimentlabserver.global.exception.complimentType.ComplimentT
 public class ComplimentTypeService {
     private final TypeComplimentRepository  typeComplimentRepository;
 
-    public TypeCompliment getType(String type) {
-        TypeCompliment typeCompliment = typeComplimentRepository.findByName(type).orElseThrow(
+    public TypeCompliment getTypeById(Long typeId) {
+        TypeCompliment typeCompliment = typeComplimentRepository.findById(typeId).orElseThrow(
                 () ->  new ComplimentTypeException(ComplimentTypeCode.NOT_FOUND)
         );
         return typeCompliment;
