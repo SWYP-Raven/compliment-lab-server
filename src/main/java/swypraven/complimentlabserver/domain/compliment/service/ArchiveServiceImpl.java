@@ -2,13 +2,17 @@ package swypraven.complimentlabserver.domain.compliment.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import swypraven.complimentlabserver.domain.compliment.entity.ChatCompliment;
 import swypraven.complimentlabserver.domain.compliment.entity.SavedTodayCompliment;
 import swypraven.complimentlabserver.domain.compliment.model.request.ArchiveRequests;
+import swypraven.complimentlabserver.domain.compliment.model.response.ArchiveDtos;
 import swypraven.complimentlabserver.domain.compliment.model.response.ArchiveDtos.ChatCardArchiveItem;
+import swypraven.complimentlabserver.domain.compliment.model.response.ArchiveDtos.ChatCardArchiveItemList;
 import swypraven.complimentlabserver.domain.compliment.model.response.ArchiveDtos.TodayArchiveItem;
 import swypraven.complimentlabserver.domain.compliment.repository.ChatComplimentRepository;
 import swypraven.complimentlabserver.domain.compliment.repository.SavedTodayComplimentRepository;
@@ -23,6 +27,7 @@ import swypraven.complimentlabserver.global.exception.user.UserErrorCode;
 import swypraven.complimentlabserver.global.exception.user.UserException;
 
 import java.time.*;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -36,6 +41,7 @@ public class ArchiveServiceImpl implements ArchiveService {
     private final UserRepository userRepo;
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+    private final ChatComplimentRepository chatComplimentRepository;
 
     // ========================= 오늘의 칭찬 (seed 기반) =========================
     @Transactional
@@ -204,6 +210,24 @@ public class ArchiveServiceImpl implements ArchiveService {
 
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public ChatCardArchiveItemList getArchivedByMonth(Long userId, YearMonth yearMonth, int page, int size) {
+
+        ZoneId zone = ZoneId.systemDefault();
+
+        Instant start = yearMonth.atDay(1).atStartOfDay(zone).toInstant();
+        Instant end   = yearMonth.atEndOfMonth().atTime(LocalTime.MAX).atZone(zone).toInstant();
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<ChatCompliment> chatComplimentPage =
+                chatComplimentRepository.findByUserIdAndCreatedAtBetween(userId, start, end, pageable);
+
+        // DTO 변환 등 처리
+        return new ChatCardArchiveItemList(chatComplimentPage.stream().map(this::mapChatCard).toList());
+    }
+
     // ============================== mappers ==============================
     private TodayArchiveItem mapToday(SavedTodayCompliment e) {
         return TodayArchiveItem.builder()
@@ -220,10 +244,9 @@ public class ArchiveServiceImpl implements ArchiveService {
                 .chatId(e.getChat().getId())
                 .message(e.getMessage())
                 .role(e.getRole())
-                .seed(e.getSeed())
                 .metaJson(e.getMetaJson())
+                .typeId(e.getChat().getFriend().getType().getId().toString())
                 .createdAt(LocalDateTime.ofInstant(e.getCreatedAt(), KST)) // Instant/LDT → LDT(KST)
                 .build();
     }
 }
-

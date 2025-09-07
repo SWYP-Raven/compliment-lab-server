@@ -14,6 +14,7 @@ import swypraven.complimentlabserver.global.auth.jwt.CustomUserPrincipal;
 import swypraven.complimentlabserver.global.response.PageResponse;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 
 @RestController
 @RequiredArgsConstructor
@@ -115,6 +116,22 @@ public class ArchiveController {
         Page<ChatCardArchiveItem> result = archiveService.listChatCards(me.id(), q, pageable);
         return ResponseEntity.ok(PageResponse.from(result));
     }
+
+
+    @GetMapping("/chat-cards/{yearMonth}")
+    public ResponseEntity<ChatCardArchiveItemList> getChatCardsByMonth(
+            @AuthenticationPrincipal CustomUserPrincipal me,
+            @PathVariable @DateTimeFormat(pattern = "yyyy-MM")
+            YearMonth yearMonth,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        ChatCardArchiveItemList result = archiveService.getArchivedByMonth(me.id(), yearMonth, page, size);
+        return ResponseEntity.ok(result);
+    }
+
+
+
 
     /**
      * 대화 카드 삭제

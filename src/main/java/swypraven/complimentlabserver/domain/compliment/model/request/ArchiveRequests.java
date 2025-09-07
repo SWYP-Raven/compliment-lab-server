@@ -42,6 +42,7 @@ public class ArchiveRequests {
 
         private Long seed;        // 생성된 문장이라면 seed (선택)
 
+        @Deprecated
         private String metaJson;  // 추가 메타데이터(JSON 문자열, 선택)
     }
 }

@@ -7,6 +7,8 @@ import org.springframework.stereotype.Repository;
 import swypraven.complimentlabserver.domain.compliment.entity.ChatCompliment;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
 
 @Repository
 public interface ChatComplimentRepository extends JpaRepository<ChatCompliment, Long> {
@@ -57,4 +59,8 @@ public interface ChatComplimentRepository extends JpaRepository<ChatCompliment, 
     @Modifying
     @Query("DELETE FROM ChatCompliment cc WHERE cc.user.id = :userId AND cc.id = :id")
     int deleteByUserIdAndId(@Param("userId") Long userId, @Param("id") Long id);
+
+    Page<ChatCompliment> findByUserIdAndCreatedAtBetween(
+            Long userId, Instant start, Instant end, Pageable pageable
+    );
 }

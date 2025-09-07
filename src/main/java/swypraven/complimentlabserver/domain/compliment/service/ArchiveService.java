@@ -6,6 +6,7 @@ import swypraven.complimentlabserver.domain.compliment.model.request.ArchiveRequ
 import swypraven.complimentlabserver.domain.compliment.model.response.ArchiveDtos.*;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 
 public interface ArchiveService {
 
@@ -16,6 +17,7 @@ public interface ArchiveService {
     Page<TodayArchiveItem> listToday(Long userId, Pageable pageable);
     Page<TodayArchiveItem> listTodayByUser(Long targetUserId, LocalDate from, LocalDate toOrToday, Pageable pageable);
     Page<ChatCardArchiveItem> listChatCards(Long userId, String q, Pageable pageable);
+    ChatCardArchiveItemList getArchivedByMonth(Long userId, YearMonth yearMonth, int page, int size);
     void removeToday(Long userId, Long id);
     void removeChatCard(Long userId, Long id);
 }
