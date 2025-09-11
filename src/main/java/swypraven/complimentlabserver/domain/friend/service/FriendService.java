@@ -81,11 +81,15 @@ public class FriendService {
 
     @Transactional
     public void delete(Long friendId) {
-        Friend friend = friendRepository.findById(friendId).orElseThrow(() -> new FriendException(FriendErrorCode.NOT_FOUND_FRIEND));
+        Friend friend = friendRepository.findById(friendId)
+                .orElseThrow(() -> new FriendException(FriendErrorCode.NOT_FOUND_FRIEND));
+
         if (!userFriendTypeRepository.existsByUserAndTypeCompliment(friend.getUser(), friend.getType())) {
             userFriendTypeRepository.save(new UserFriendType(friend.getUser(), friend.getType()));
         }
-        friendRepository.deleteById(friendId);
+
+        // ✅ Friend 엔티티만 삭제하면, cascade 설정에 의해 Chat/ChatCompliment도 자동 삭제됨
+        friendRepository.delete(friend);
     }
 
     @Transactional(readOnly = true)

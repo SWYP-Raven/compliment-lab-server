@@ -31,7 +31,7 @@ public class Friend {
     @Column(name = "name")
     private String name;
 
-    @OneToMany(mappedBy = "friend", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "friend", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Chat> chats = new ArrayList<>();
 
     @Builder
