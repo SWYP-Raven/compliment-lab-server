@@ -5,8 +5,11 @@ import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
+import swypraven.complimentlabserver.domain.compliment.entity.ChatCompliment;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -39,6 +42,12 @@ public class Chat {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "friend_id", nullable = false)
     private Friend friend;
+    
+    //칭구 삭제 부분 관련 추가
+    @OneToMany(mappedBy = "chat",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private List<ChatCompliment> compliments = new ArrayList<>();
 
     @Lob
     @Column(name = "message", nullable = false, columnDefinition = "LONGTEXT")
