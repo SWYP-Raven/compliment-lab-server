@@ -90,14 +90,16 @@ public class UserService implements UserDetailsService {
         return new UserInfoResponse(user);
     }
 
+    /** 회원 탈퇴 */
     @Transactional
     public void deleteUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
-        // 연관관계 정리 (FK 제약조건 에러 방지)
+        // 연관 엔티티 제거
         user.getFriends().clear();
         user.getFriendTypes().clear();
+        user.getSavedTodayCompliments().clear();
 
         userRepository.delete(user);
     }
