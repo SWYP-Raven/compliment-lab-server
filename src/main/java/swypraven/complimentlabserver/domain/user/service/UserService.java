@@ -94,11 +94,6 @@ public class UserService implements UserDetailsService {
     public void deleteUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
-
-        // 연관관계 정리 (FK 제약조건 에러 방지)
-        user.getFriends().clear();
-        user.getFriendTypes().clear();
-
         userRepository.delete(user);
     }
 
