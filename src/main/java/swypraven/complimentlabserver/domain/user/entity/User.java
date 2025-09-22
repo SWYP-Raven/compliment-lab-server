@@ -28,6 +28,8 @@ public class User {
     public User(String email, String appleSub) {
         this.email = email;
         this.appleSub = appleSub;
+        this.nickname = "사용자"; //기본 닉네임 보장
+        this.role = "ROLE_USER"; //기본 권한 설정
     }
 
     @Id
@@ -103,12 +105,11 @@ public class User {
 
 
     public User update(UpdateUserRequest updateUserRequest) {
-        this.nickname = updateUserRequest.nickname();
-        this.friendAlarm = updateUserRequest.friendAlarm();
-        this.archiveAlarm = updateUserRequest.archiveAlarm();
-        this.marketingAlarm = updateUserRequest.marketingAlarm();
-        this.eventAlarm = updateUserRequest.eventAlarm();
-
+        this.nickname = updateUserRequest.safeNickname();
+        this.friendAlarm = updateUserRequest.safeFriendAlarm();
+        this.archiveAlarm = updateUserRequest.safeArchiveAlarm();
+        this.marketingAlarm = updateUserRequest.safeMarketingAlarm();
+        this.eventAlarm = updateUserRequest.safeEventAlarm();
         return this;
     }
 }
