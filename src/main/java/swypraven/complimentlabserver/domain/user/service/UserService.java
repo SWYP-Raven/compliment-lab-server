@@ -25,14 +25,16 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
-
     @Transactional
     public FindOrCreateAppleUserDto findOrCreate(String sub, String email) {
         return userRepository.findByEmail(email)
                 .map(user -> new FindOrCreateAppleUserDto(user, true))
                 .orElseGet(() -> {
-                    User newUser = userRepository.save(new User(email, sub).setRole("ROLE_USER"));
-                    return new FindOrCreateAppleUserDto(newUser, false);
+                    User newUser = new User(email, sub).setRole("ROLE_USER");
+                    if (newUser.getNickname() == null || newUser.getNickname().isBlank()) {
+                        newUser.setNickname("사용자");
+                    }
+                    return new FindOrCreateAppleUserDto(userRepository.save(newUser), false);
                 });
     }
 
@@ -53,8 +55,8 @@ public class UserService implements UserDetailsService {
         }
         User u = new User();
         u.setAppleSub(sub);
-        u.setEmail(normEmail);        // null 가능
-        u.setNickname(nickname);      // 회원가입 시 필수 (엔티티에서 nullable=false라면 반드시 값 필요)
+        u.setEmail(normEmail);
+        u.setNickname((nickname == null || nickname.isBlank()) ? "사용자" : nickname);
         u.setRole("ROLE_USER");
         return userRepository.save(u);
     }
@@ -63,6 +65,7 @@ public class UserService implements UserDetailsService {
         return userRepository.findByAppleSub(normalizeSub(appleSub))
                 .orElseThrow(() -> new UsernameNotFoundException("User not found by appleSub: " + appleSub));
     }
+
     public User getByAppleEmail(String email) {
         return userRepository.findByAppleSub(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found by email: " + email));
@@ -80,27 +83,24 @@ public class UserService implements UserDetailsService {
         return new UserInfoResponse(updatedUser);
     }
 
-
     @Transactional(readOnly = true)
     public UserInfoResponse getUserInfo(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
         return new UserInfoResponse(user);
     }
 
     @Transactional
     public void deleteUser(Long userId) {
-        userRepository.deleteById(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+        userRepository.delete(user);
     }
-
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(normalizeEmail(email));
     }
 
-    /**
-     * Spring Security 표준: username으로 사용자 로드
-     * 여기서는 username = appleSub
-     */
     @Override
     public UserDetails loadUserByUsername(String appleSub) throws UsernameNotFoundException {
         User user = getByAppleSub(appleSub);
@@ -111,7 +111,6 @@ public class UserService implements UserDetailsService {
         return new CustomUserDetails(user, auth);
     }
 
-    /** 토큰에 userId를 넣는 전략일 때 유용한 헬퍼 */
     public UserDetails loadUserById(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found by id: " + userId));
@@ -122,14 +121,11 @@ public class UserService implements UserDetailsService {
         return new CustomUserDetails(user, auth);
     }
 
-
-
     private String normalizeSub(String sub) {
         return sub == null ? null : sub.trim();
     }
+
     private String normalizeEmail(String email) {
         return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
-
     }
-
 }
