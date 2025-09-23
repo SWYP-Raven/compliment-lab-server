@@ -25,4 +25,4 @@ COPY build/libs/compliment-lab-server-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
 
 # Spring profile release 지정
-ENTRYPOINT ["java","-jar","app.jar","--spring.profiles.active=release"]
+ENTRYPOINT ["java","-jar","app.jar","--spring.profiles.active=prod"]
