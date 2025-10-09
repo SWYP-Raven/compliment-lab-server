@@ -19,6 +19,13 @@ jobs:
       packages: write
 
     steps:
+      - name: Check Runner Architecture
+        run: uname -m
+
+      # 2. 코드 체크아웃
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       # 1. 코드 체크아웃
       - name: Checkout code
         uses: actions/checkout@v4
