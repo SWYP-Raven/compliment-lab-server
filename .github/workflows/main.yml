@@ -16,25 +16,25 @@ jobs:
       packages: write
 
     steps:
-      # 1. 런너 아키텍처 확인 (디버깅용)
+      # 1️⃣ 런너 아키텍처 확인 (디버깅용)
       - name: Check Runner Architecture
         run: uname -m
 
-      # 2. 코드 체크아웃
+      # 2️⃣ 코드 체크아웃
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 3. application-prod.yml 생성
+      # 3️⃣ application-prod.yml 생성
       - name: Create application-prod.yml
         run: |
           mkdir -p src/main/resources
           echo "${{ secrets.APPLICATION_PROD }}" > src/main/resources/application-prod.yml
 
-      # 4. 이미지 이름을 소문자로 설정 (GHCR 요구사항)
+      # 4️⃣ 이미지 이름을 소문자로 설정 (GHCR 요구사항)
       - name: Set lowercase image name
         run: echo "IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
-      # 5. JDK 17 설정 및 Gradle 캐시 활성화
+      # 5️⃣ JDK 17 설정 및 Gradle 캐시 활성화
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -42,57 +42,47 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      # 6. Gradle 실행 권한 및 테스트
+      # 6️⃣ Gradle 실행 권한 및 테스트
       - name: Grant Gradle permissions
         run: chmod +x ./gradlew
+
       - name: Test with Gradle
         run: ./gradlew test
 
-      # 7. Gradle 빌드
+      # 7️⃣ Gradle 빌드
       - name: Build with Gradle
-        run: ./gradlew build
+        run: ./gradlew clean build -x test
 
-      # 8. Docker Buildx 설정
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # 9. GHCR 로그인
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      # 10. 멀티플랫폼 Docker 이미지 빌드 및 푸시
+      # 8️⃣ QEMU 및 Buildx 설정 (멀티플랫폼 빌드용)
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to GitHub Container Registry
+      # 9️⃣ GHCR 로그인
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-
+      # 🔟 멀티플랫폼 Docker 이미지 빌드 및 푸시
       - name: Build and push multi-platform Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
           push: true
-        tags: |
-          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           platforms: linux/amd64,linux/arm64   # ✅ 멀티 아키텍처 빌드
           cache-from: type=gha,scope=${{ github.workflow }}
           cache-to: type=gha,scope=${{ github.workflow }},mode=max
 
-      # 11. 서버 배포
+      # 1️⃣1️⃣ 서버 배포
       - name: Deploy to Development Server
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -100,6 +90,8 @@ jobs:
           username: ${{ secrets.DEV_SERVER_USERNAME }}
           key: ${{ secrets.DEV_SERVER_SSH_KEY }}
           script: |
+            set -e
+
             cd /home/ubuntu/project
 
             # .env 파일 생성
@@ -112,10 +104,18 @@ jobs:
             DOCKER_IMAGE_NAME=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
             EOF
 
-            # 최신 이미지 pull 및 재시작
+            echo "✅ .env file created successfully"
+
+            # 최신 이미지 Pull 및 재시작
+            echo "🔄 Pulling latest image..."
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+            echo "🚀 Restarting containers..."
             docker-compose down
             docker-compose up -d
 
             # 불필요한 이미지 정리
+            echo "🧹 Cleaning up old images..."
             docker image prune -f --filter "dangling=true"
+
+            echo "✅ Deployment completed successfully!"
