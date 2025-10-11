@@ -92,7 +92,7 @@ jobs:
           script: |
             set -e
 
-            cd /home/ubuntu/project
+            cd /home/user
 
             # .env 파일 생성
             cat << EOF > .env
