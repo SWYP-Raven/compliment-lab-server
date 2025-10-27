@@ -75,9 +75,13 @@ jobs:
             cd /home/user
 
             cat << EOF > .env
+            MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
+            MYSQL_USER=${{ secrets.MYSQL_USER }}
+            MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+            MYSQL_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}
+
             DB_USER=${{ secrets.DB_USER }}
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            MYSQL_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}
             SPRING_PROFILES_ACTIVE=prod
             IMAGE_TAG=${{ github.sha }}
             DOCKER_IMAGE_NAME=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
