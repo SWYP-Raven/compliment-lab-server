@@ -40,6 +40,9 @@ public class AppleIdTokenValidatorImpl implements AppleIdTokenValidator {
     @Override
     public JWTClaimsSet validate(String idToken) {
         try {
+
+            log.info("Apple ID Token: {}", idToken);
+
             SignedJWT signed = SignedJWT.parse(idToken);
 
 
