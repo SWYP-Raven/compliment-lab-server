@@ -18,7 +18,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import swypraven.complimentlabserver.global.exception.auth.AuthErrorCode;
 import swypraven.complimentlabserver.global.exception.auth.AuthException;
 import java.net.URL;
-import java.util.Date;
+
 
 @Slf4j
 @Service
@@ -42,9 +42,9 @@ public class AppleIdTokenValidatorImpl implements AppleIdTokenValidator {
         try {
             SignedJWT signed = SignedJWT.parse(idToken);
 
+
             ConfigurableJWTProcessor<SecurityContext> jwtProcessor = createJwtProcessor();
             JWTClaimsSet claims = jwtProcessor.process(signed, null);
-
             if (!ISS.equals(claims.getIssuer()) || !claims.getAudience().contains(appleClientId)) {
                 throw new AuthException(AuthErrorCode.JWT_SIGNATURE_INVALID);
             }
@@ -69,7 +69,9 @@ public class AppleIdTokenValidatorImpl implements AppleIdTokenValidator {
     // RS256 서명 검증용 JWKS 셋업 (캐싱 포함)
     ConfigurableJWTProcessor<SecurityContext> createJwtProcessor() throws Exception {
         RemoteJWKSet<SecurityContext> jwkSource = new RemoteJWKSet<>(new URL(JWK_URL));
-        JWSVerificationKeySelector<SecurityContext> selector = new JWSVerificationKeySelector<>(JWSAlgorithm.RS256, jwkSource);
+        // 변경: RS256으로 설정해야 Apple의 공개키 검증이 정상 동작
+        JWSVerificationKeySelector<SecurityContext> selector =
+                new JWSVerificationKeySelector<>(JWSAlgorithm.RS256, jwkSource);
         DefaultJWTProcessor<SecurityContext> p = new DefaultJWTProcessor<>();
         p.setJWSKeySelector(selector);
         p.setJWTClaimsSetVerifier((claims, context) -> { /* 수동 검증은 위에서 */ });
