@@ -1,7 +1,7 @@
 package swypraven.complimentlabserver.domain.chat.model.response;
 
 import lombok.Getter;
-import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
+import swypraven.complimentlabserver.domain.chat.entity.ChatRole;
 import swypraven.complimentlabserver.domain.compliment.entity.ChatCompliment;
 import swypraven.complimentlabserver.domain.chat.entity.Chat;
 
@@ -30,5 +30,5 @@ public class ChatResponse {
     private final LocalDateTime time;
     private final String message;
     private final String name;
-    private final RoleType role;
+    private final ChatRole role;
 }

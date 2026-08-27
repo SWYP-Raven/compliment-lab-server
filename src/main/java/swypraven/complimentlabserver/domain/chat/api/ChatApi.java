@@ -1,7 +1,7 @@
-package swypraven.complimentlabserver.domain.compliment.api;
+package swypraven.complimentlabserver.domain.chat.api;
 
 import org.springframework.stereotype.Service;
-import swypraven.complimentlabserver.domain.compliment.model.dto.naver.response.ResponseNavarClovaChat;
+import swypraven.complimentlabserver.domain.chat.model.response.ResponseNavarClovaChat;
 import swypraven.complimentlabserver.domain.chat.model.request.RequestMessage;
 import swypraven.complimentlabserver.domain.chat.entity.Chat;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;

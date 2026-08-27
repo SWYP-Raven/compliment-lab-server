@@ -1,5 +1,14 @@
 package swypraven.complimentlabserver.domain.chat.entity;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Getter
+@RequiredArgsConstructor
 public enum ChatRole {
-    user, system, assistant;
+    SYSTEM("system"),
+    USER("user"),
+    ASSISTANT("assistant");
+
+    private final String name;
 }

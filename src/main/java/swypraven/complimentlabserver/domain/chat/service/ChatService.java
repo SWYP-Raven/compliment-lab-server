@@ -7,12 +7,12 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import swypraven.complimentlabserver.domain.compliment.api.ChatApi;
-import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
+import swypraven.complimentlabserver.domain.chat.api.ChatApi;
+import swypraven.complimentlabserver.domain.chat.entity.ChatRole;
 import swypraven.complimentlabserver.domain.compliment.entity.ChatCompliment;
 import swypraven.complimentlabserver.domain.chat.model.response.ChatResponse;
 import swypraven.complimentlabserver.domain.chat.model.response.ChatResponseSlice;
-import swypraven.complimentlabserver.domain.compliment.model.dto.naver.response.ResponseNavarClovaChat;
+import swypraven.complimentlabserver.domain.chat.model.response.ResponseNavarClovaChat;
 import swypraven.complimentlabserver.domain.chat.model.request.RequestMessage;
 import swypraven.complimentlabserver.domain.chat.model.response.ResponseMessage;
 import swypraven.complimentlabserver.domain.compliment.repository.ChatComplimentRepository;
@@ -69,8 +69,8 @@ public class ChatService {
         ResponseNavarClovaChat chatResponse = chatApi.reply(friend, chatHistory, requestMessage);
 
         // 메시지 저장
-        Chat chat = new Chat(requestMessage.getMessage(), RoleType.USER, friend);
-        Chat responseChat = new Chat(chatResponse.getMessage(), RoleType.ASSISTANT, friend);
+        Chat chat = new Chat(requestMessage.getMessage(), ChatRole.USER, friend);
+        Chat responseChat = new Chat(chatResponse.getMessage(), ChatRole.ASSISTANT, friend);
 
         chatRepository.save(chat);
         chatRepository.save(responseChat);
@@ -106,7 +106,7 @@ public class ChatService {
         Chat chat = chatRepository.findById(messageId)
                 .orElseThrow(() -> new ChatException(ChatErrorCode.NOT_FOUND));
 
-        if (chat.getRole() == RoleType.USER) {
+        if (chat.getRole() == ChatRole.USER) {
             throw new ChatException(ChatErrorCode.INVALID_SAVE_ROLE_TYPE);
         }
 
@@ -143,7 +143,7 @@ public class ChatService {
     }
     @Transactional(readOnly = true)
     public ChatResponse findLastChats(Friend friend) {
-        Chat chat = chatRepository.findFirstByFriendOrderByCreatedAtDesc(friend).orElseGet(() -> new Chat("", RoleType.USER, friend));
+        Chat chat = chatRepository.findFirstByFriendOrderByCreatedAtDesc(friend).orElseGet(() -> new Chat("", ChatRole.USER, friend));
         return new ChatResponse(chat);
     }
 }

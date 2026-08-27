@@ -1,11 +1,10 @@
-package swypraven.complimentlabserver.domain.compliment.model.dto.naver.request;
+package swypraven.complimentlabserver.domain.chat.model.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
-import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
-import swypraven.complimentlabserver.domain.chat.model.request.RequestMessage;
 import swypraven.complimentlabserver.domain.chat.entity.Chat;
+import swypraven.complimentlabserver.domain.chat.entity.ChatRole;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +20,7 @@ public class RequestNaverClovaChat {
         // 1. 시스템 프롬프트
         this.messages.add(new Message(
                 List.of(new Content("text", prompt)),
-                RoleType.SYSTEM.getName()
+                ChatRole.SYSTEM.getName()
         ));
 
         // 2. 히스토리 추가 (항상 존재)
@@ -35,7 +34,7 @@ public class RequestNaverClovaChat {
         // 3. 현재 사용자 메시지
         this.messages.add(new Message(
                 List.of(new Content("text", requestMessage.getMessage())),
-                RoleType.USER.getName()
+                ChatRole.USER.getName()
         ));
     }
 

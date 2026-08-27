@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
 
 import java.time.LocalDateTime;
@@ -26,7 +25,7 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 public class Chat {
 
-    public Chat(String chat, RoleType role, Friend friend) {
+    public Chat(String chat, ChatRole role, Friend friend) {
         this.friend = friend;
         this.message = chat;
         this.role = role;
@@ -47,7 +46,7 @@ public class Chat {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
-    private RoleType role;
+    private ChatRole role;
 
     @CreatedDate
     @Column(name = "created_at", updatable = false, nullable = false)
@@ -56,6 +55,6 @@ public class Chat {
     @PrePersist
     void prePersist() {
         if (createdAt == null) createdAt = LocalDateTime.now();
-        if (role == null) role = RoleType.USER; // 프로젝트 enum 값에 맞춰 조정
+        if (role == null) role = ChatRole.USER;
     }
 }
