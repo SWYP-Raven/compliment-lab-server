@@ -1,11 +1,11 @@
-package swypraven.complimentlabserver.domain.friend.entity;
+package swypraven.complimentlabserver.domain.chat.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
 import swypraven.complimentlabserver.domain.compliment.entity.ChatCompliment;
+import swypraven.complimentlabserver.domain.friend.entity.Friend;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ import java.util.List;
 @EntityListeners(AuditingEntityListener.class)
 public class Chat {
 
-    public Chat(String chat, RoleType role, Friend friend) {
+    public Chat(String chat, ChatRole role, Friend friend) {
         this.friend = friend;
         this.message = chat;
         this.role = role;
@@ -42,11 +42,9 @@ public class Chat {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "friend_id", nullable = false)
     private Friend friend;
-    
-    //칭구 삭제 부분 관련 추가
-    @OneToMany(mappedBy = "chat",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
+
+    @Builder.Default
+    @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChatCompliment> compliments = new ArrayList<>();
 
     @Lob
@@ -55,7 +53,7 @@ public class Chat {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
-    private RoleType role;
+    private ChatRole role;
 
     @CreatedDate
     @Column(name = "created_at", updatable = false, nullable = false)
@@ -64,6 +62,6 @@ public class Chat {
     @PrePersist
     void prePersist() {
         if (createdAt == null) createdAt = LocalDateTime.now();
-        if (role == null) role = RoleType.USER; // 프로젝트 enum 값에 맞춰 조정
+        if (role == null) role = ChatRole.USER;
     }
 }

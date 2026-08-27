@@ -2,6 +2,7 @@ package swypraven.complimentlabserver.domain.friend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import swypraven.complimentlabserver.domain.chat.entity.Chat;
 import swypraven.complimentlabserver.domain.compliment.entity.TypeCompliment;
 import swypraven.complimentlabserver.domain.user.entity.User;
 
@@ -9,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-@Setter
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor

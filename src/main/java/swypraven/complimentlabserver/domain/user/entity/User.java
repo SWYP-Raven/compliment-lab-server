@@ -5,7 +5,6 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import swypraven.complimentlabserver.domain.compliment.entity.SavedTodayCompliment;
-import swypraven.complimentlabserver.domain.compliment.entity.UserComplimentLog;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
 import swypraven.complimentlabserver.domain.friend.entity.UserFriendType;
 import swypraven.complimentlabserver.domain.user.model.request.UpdateUserRequest;
@@ -32,8 +31,8 @@ public class User {
     public User(String email, String appleSub) {
         this.email = email;
         this.appleSub = appleSub;
-        this.nickname = "사용자"; // 기본 닉네임 보장
-        this.role = "ROLE_USER"; // 기본 권한 설정
+        this.nickname = "사용자";
+        this.role = "ROLE_USER";
     }
 
     @Id
@@ -70,12 +69,11 @@ public class User {
     private String appleSub;
 
     @Column(name = "role", nullable = false, length = 50)
-    private String role; // 예: ROLE_USER
+    private String role;
 
     @Column(name = "seed", nullable = false)
     private Integer seed;
 
-    // refresh token 저장용
     @Column(name = "refresh_token", length = 512)
     private String refreshToken;
 
@@ -88,22 +86,11 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<SavedTodayCompliment> savedTodayCompliments = new ArrayList<>();
 
-
-
-
     @PrePersist
     private void ensureSeed() {
         if (this.seed == null) {
             this.seed = (int) (Math.random() * 100_000);
         }
-    }
-
-    public Integer getSeed() {
-        return this.seed;
-    }
-
-    public void setSeed(Integer seed) {
-        this.seed = seed;
     }
 
     public User setRole(String role) {

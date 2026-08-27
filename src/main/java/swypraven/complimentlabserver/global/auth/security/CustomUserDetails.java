@@ -1,4 +1,3 @@
-// src/main/java/swypraven/complimentlabserver/global/auth/security/CustomUserDetails.java
 package swypraven.complimentlabserver.global.auth.security;
 
 import lombok.Getter;

@@ -6,8 +6,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
-import swypraven.complimentlabserver.domain.compliment.api.ChatApi;
-import swypraven.complimentlabserver.domain.compliment.api.naver.NaverChatApi;
+import swypraven.complimentlabserver.domain.chat.api.ChatApi;
+import swypraven.complimentlabserver.domain.chat.naver.NaverChatApi;
 
 @Configuration
 public class Config {

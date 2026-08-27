@@ -1,22 +1,18 @@
-package swypraven.complimentlabserver.domain.friend.repository;
+package swypraven.complimentlabserver.domain.chat.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.*;
 import org.springframework.stereotype.Repository;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import swypraven.complimentlabserver.domain.friend.entity.Chat;
+import swypraven.complimentlabserver.domain.chat.entity.Chat;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
 
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
-
 import java.util.Optional;
 
 @Repository

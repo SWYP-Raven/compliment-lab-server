@@ -1,13 +1,13 @@
-package swypraven.complimentlabserver.domain.compliment.api.naver;
+package swypraven.complimentlabserver.domain.chat.naver;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.reactive.function.client.WebClient;
-import swypraven.complimentlabserver.domain.compliment.api.ChatApi;
-import swypraven.complimentlabserver.domain.compliment.model.dto.naver.request.RequestNaverClovaChat;
-import swypraven.complimentlabserver.domain.compliment.model.dto.naver.response.ResponseNavarClovaChat;
-import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
-import swypraven.complimentlabserver.domain.friend.entity.Chat;
+import swypraven.complimentlabserver.domain.chat.api.ChatApi;
+import swypraven.complimentlabserver.domain.chat.model.request.RequestNaverClovaChat;
+import swypraven.complimentlabserver.domain.chat.model.response.ResponseNavarClovaChat;
+import swypraven.complimentlabserver.domain.chat.model.request.RequestMessage;
+import swypraven.complimentlabserver.domain.chat.entity.Chat;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
 
 import java.util.List;

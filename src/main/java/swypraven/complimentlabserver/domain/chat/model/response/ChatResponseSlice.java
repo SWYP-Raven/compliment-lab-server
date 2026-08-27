@@ -1,4 +1,4 @@
-package swypraven.complimentlabserver.domain.compliment.model.dto;
+package swypraven.complimentlabserver.domain.chat.model.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
