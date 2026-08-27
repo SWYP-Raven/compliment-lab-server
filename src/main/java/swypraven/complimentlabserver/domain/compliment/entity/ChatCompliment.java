@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import swypraven.complimentlabserver.domain.friend.entity.Chat;
+import swypraven.complimentlabserver.domain.chat.entity.Chat;
 import swypraven.complimentlabserver.domain.user.entity.User;
 
 import java.time.LocalDateTime;

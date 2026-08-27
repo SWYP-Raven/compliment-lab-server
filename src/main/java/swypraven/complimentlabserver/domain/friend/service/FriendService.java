@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import swypraven.complimentlabserver.domain.compliment.entity.TypeCompliment;
-import swypraven.complimentlabserver.domain.compliment.model.dto.ChatResponse;
-import swypraven.complimentlabserver.domain.compliment.service.ChatService;
+import swypraven.complimentlabserver.domain.chat.model.response.ChatResponse;
+import swypraven.complimentlabserver.domain.chat.service.ChatService;
 import swypraven.complimentlabserver.domain.compliment.service.ComplimentTypeService;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
 import swypraven.complimentlabserver.domain.friend.entity.UserFriendType;
@@ -17,7 +17,6 @@ import swypraven.complimentlabserver.domain.friend.repository.FriendRepository;
 import swypraven.complimentlabserver.domain.friend.repository.UserFriendTypeRepository;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
-import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
 import swypraven.complimentlabserver.global.exception.friend.FriendErrorCode;
 import swypraven.complimentlabserver.global.exception.friend.FriendException;
 import swypraven.complimentlabserver.global.exception.user.UserErrorCode;
@@ -37,10 +36,9 @@ public class FriendService {
     private final ChatService chatService;
 
     @Transactional
-    public ResponseFriend create(CustomUserDetails userDetails, RequestCreateFriend request) {
-
-        User user = userRepository.findById(userDetails.getId()).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
-
+    public ResponseFriend create(Long userId, RequestCreateFriend request){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
         TypeCompliment type = complimentTypeService.getType(request.getFriendType());
 
         if(friendRepository.existsByUserAndType(user, type)) {
@@ -57,8 +55,9 @@ public class FriendService {
 
 
     @Transactional(readOnly = true)
-    public List<ResponseFriend> getFriends(CustomUserDetails userDetails) {
-        User user = userRepository.findById(userDetails.getId()).orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
+    public List<ResponseFriend> getFriends(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
         List<Friend> friends = friendRepository.findAllByUser(user);
 
         return friends.stream().map(friend -> {
@@ -69,17 +68,27 @@ public class FriendService {
 
 
     @Transactional
-    public ResponseFriend updateFriend(Long friendId, RequestUpdateFriend request) {
-        Friend friend = friendRepository.findById(friendId)
+    public ResponseFriend updateFriend(Long friendId, Long userId, RequestUpdateFriend request) {
+        Friend friend = friendRepository.findByIdAndUserId(friendId, userId)
                 .orElseThrow(() -> new FriendException(FriendErrorCode.NOT_FOUND_FRIEND));
+        if(!friend.getUser().getId().equals(userId)){
+            throw new FriendException(FriendErrorCode.FORBIDDEN_FRIEND);
+        }
+
         friend.changeName(request.getName());
 
         return new ResponseFriend(friend);
     }
 
     @Transactional
-    public void delete(Long friendId) {
-        Friend friend = friendRepository.findById(friendId).orElseThrow(() -> new FriendException(FriendErrorCode.NOT_FOUND_FRIEND));
+    public void delete(Long friendId, Long userId) {
+        Friend friend = friendRepository.findByIdAndUserId(friendId, userId)
+                .orElseThrow(() -> new FriendException(FriendErrorCode.NOT_FOUND_FRIEND));
+
+        if (!friend.getUser().getId().equals(userId)) {
+            throw new FriendException(FriendErrorCode.FORBIDDEN_FRIEND);
+        }
+
         userFriendTypeRepository.save(new UserFriendType(friend.getUser(), friend.getType()));
         friendRepository.deleteById(friendId);
     }

@@ -1,9 +1,9 @@
-package swypraven.complimentlabserver.domain.compliment.model.dto;
+package swypraven.complimentlabserver.domain.chat.model.response;
 
 import lombok.Getter;
 import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
 import swypraven.complimentlabserver.domain.compliment.entity.ChatCompliment;
-import swypraven.complimentlabserver.domain.friend.entity.Chat;
+import swypraven.complimentlabserver.domain.chat.entity.Chat;
 
 import java.time.LocalDateTime;
 

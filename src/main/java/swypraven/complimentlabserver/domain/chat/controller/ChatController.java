@@ -1,20 +1,18 @@
-package swypraven.complimentlabserver.domain.compliment.controller;
+package swypraven.complimentlabserver.domain.chat.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import swypraven.complimentlabserver.domain.compliment.model.dto.ChatResponseSlice;
-import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
-import swypraven.complimentlabserver.domain.compliment.model.response.ResponseMessage;
-import swypraven.complimentlabserver.domain.compliment.service.ChatService;
+import swypraven.complimentlabserver.domain.chat.model.response.ChatResponseSlice;
+import swypraven.complimentlabserver.domain.chat.model.request.RequestMessage;
+import swypraven.complimentlabserver.domain.chat.model.response.ResponseMessage;
+import swypraven.complimentlabserver.domain.chat.service.ChatService;
 import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
 import swypraven.complimentlabserver.global.response.ApiResponse;
 
 import java.time.LocalDateTime;
-import org.springframework.web.bind.annotation.*;
-
 
 
 @RestController

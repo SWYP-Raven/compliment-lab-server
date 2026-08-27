@@ -13,8 +13,8 @@ import swypraven.complimentlabserver.domain.compliment.model.response.ArchiveDto
 import swypraven.complimentlabserver.domain.compliment.repository.ChatComplimentRepository;
 import swypraven.complimentlabserver.domain.compliment.repository.SavedTodayComplimentRepository;
 import swypraven.complimentlabserver.domain.compliment.repository.TodayComplimentRepository;
-import swypraven.complimentlabserver.domain.friend.entity.Chat;
-import swypraven.complimentlabserver.domain.friend.repository.ChatRepository;
+import swypraven.complimentlabserver.domain.chat.entity.Chat;
+import swypraven.complimentlabserver.domain.chat.repository.ChatRepository;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
 
@@ -22,7 +22,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor

@@ -1,4 +1,4 @@
-package swypraven.complimentlabserver.domain.compliment.service;
+package swypraven.complimentlabserver.domain.chat.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -10,15 +10,15 @@ import org.springframework.transaction.annotation.Transactional;
 import swypraven.complimentlabserver.domain.compliment.api.ChatApi;
 import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
 import swypraven.complimentlabserver.domain.compliment.entity.ChatCompliment;
-import swypraven.complimentlabserver.domain.compliment.model.dto.ChatResponse;
-import swypraven.complimentlabserver.domain.compliment.model.dto.ChatResponseSlice;
+import swypraven.complimentlabserver.domain.chat.model.response.ChatResponse;
+import swypraven.complimentlabserver.domain.chat.model.response.ChatResponseSlice;
 import swypraven.complimentlabserver.domain.compliment.model.dto.naver.response.ResponseNavarClovaChat;
-import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
-import swypraven.complimentlabserver.domain.compliment.model.response.ResponseMessage;
+import swypraven.complimentlabserver.domain.chat.model.request.RequestMessage;
+import swypraven.complimentlabserver.domain.chat.model.response.ResponseMessage;
 import swypraven.complimentlabserver.domain.compliment.repository.ChatComplimentRepository;
-import swypraven.complimentlabserver.domain.friend.entity.Chat;
+import swypraven.complimentlabserver.domain.chat.entity.Chat;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
-import swypraven.complimentlabserver.domain.friend.repository.ChatRepository;
+import swypraven.complimentlabserver.domain.chat.repository.ChatRepository;
 import swypraven.complimentlabserver.domain.friend.repository.FriendRepository;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;

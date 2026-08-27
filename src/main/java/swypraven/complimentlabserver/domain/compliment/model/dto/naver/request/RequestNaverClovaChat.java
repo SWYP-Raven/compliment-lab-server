@@ -4,8 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
-import swypraven.complimentlabserver.domain.compliment.model.request.RequestMessage;
-import swypraven.complimentlabserver.domain.friend.entity.Chat;
+import swypraven.complimentlabserver.domain.chat.model.request.RequestMessage;
+import swypraven.complimentlabserver.domain.chat.entity.Chat;
 
 import java.util.ArrayList;
 import java.util.List;

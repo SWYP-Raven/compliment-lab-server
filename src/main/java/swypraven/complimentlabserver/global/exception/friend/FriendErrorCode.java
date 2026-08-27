@@ -11,7 +11,7 @@ public enum FriendErrorCode implements ErrorCode {
 
     EXIST_FRIEND("FRIEND_1", "이미 존재하는 친구입니다.", HttpStatus.BAD_REQUEST),
     NOT_FOUND_FRIEND("FRIEND_2", "존재하지 않는 친구 입니다.", HttpStatus.NOT_FOUND),
-    ;
+    FORBIDDEN_FRIEND("FRIEND_3", "친구에 대한 권한이 없습니다.", HttpStatus.FORBIDDEN);
     private final String code;
     private final String message;
     private final HttpStatus httpStatus;

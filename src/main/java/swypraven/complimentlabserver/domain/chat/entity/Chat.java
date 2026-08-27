@@ -1,10 +1,11 @@
-package swypraven.complimentlabserver.domain.friend.entity;
+package swypraven.complimentlabserver.domain.chat.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import swypraven.complimentlabserver.domain.compliment.api.naver.RoleType;
+import swypraven.complimentlabserver.domain.friend.entity.Friend;
 
 import java.time.LocalDateTime;
 

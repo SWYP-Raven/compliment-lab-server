@@ -1,4 +1,3 @@
-// ComplimentService.java
 package swypraven.complimentlabserver.domain.compliment.service;
 
 import lombok.RequiredArgsConstructor;
@@ -14,8 +13,6 @@ import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
 
 import java.time.*;
-import java.util.Collections;
-import java.util.List;
 import java.util.NoSuchElementException;
 
 @Slf4j
@@ -76,23 +73,18 @@ public class ComplimentService {
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException("User not found"));
 
-        List<TodayCompliment> candidates = todayRepo.findAllNotDuplicated(userId);
-
-        if (candidates.isEmpty()) {
-            throw new NoSuchElementException("더 이상 줄 수 있는 랜덤 칭찬이 없습니다.");
-        }
-
-        Collections.shuffle(candidates); // 진짜 랜덤
-        TodayCompliment picked = candidates.get(0);
-
+        TodayCompliment picked = todayRepo.pickRandomNotDuplicated(userId)
+                .orElseThrow(() -> new NoSuchElementException("더 이상 줄 수 있는 랜덤 칭찬이 없습니다."));
 
         // 중복로그 저장(처음 지급이면 exists가 false일 것)
+
         if (!dupRepo.existsByUserIdAndComplimentId(userId, picked.getId())) {
             DuplicatedCompliment log = DuplicatedCompliment.builder()
                     .user(user)
                     .compliment(picked)
                     .isRead(false)
                     .build();
+
             dupRepo.save(log);
         }
 

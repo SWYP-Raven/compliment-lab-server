@@ -6,7 +6,6 @@ import swypraven.complimentlabserver.domain.compliment.entity.TypeCompliment;
 import swypraven.complimentlabserver.domain.user.entity.User;
 
 @Getter
-@Setter
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor

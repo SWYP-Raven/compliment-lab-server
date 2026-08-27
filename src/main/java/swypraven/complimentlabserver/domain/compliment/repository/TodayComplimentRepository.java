@@ -16,14 +16,20 @@ public interface TodayComplimentRepository extends JpaRepository<TodayCompliment
 
 
     // 유저가 아직 받지 않은 칭찬 중 랜덤 1건(중복 제외)
+    //포인트:
+    //ORDER BY RAND()
+    //LIMIT 1
+    //DB에서 랜덤으로 1개만 뽑습니다.
     @Query(value = """
-        SELECT t.*
-        FROM today_compliment t
-        WHERE NOT EXISTS (
-          SELECT 1 FROM duplicated_compliment d
-          WHERE d.user_id = :userId AND d.compliment_id = t.id
-        ) 
-        """, nativeQuery = true)
-    List<TodayCompliment> findAllNotDuplicated(@Param("userId") Long userId);
+    SELECT t.*
+    FROM today_compliment t
+    WHERE NOT EXISTS (
+      SELECT 1 FROM duplicated_compliment d
+      WHERE d.user_id = :userId AND d.compliment_id = t.id
+    )
+    ORDER BY RAND()
+    LIMIT 1
+    """, nativeQuery = true)
+    Optional<TodayCompliment> pickRandomNotDuplicated(@Param("userId") Long userId);
 
 }

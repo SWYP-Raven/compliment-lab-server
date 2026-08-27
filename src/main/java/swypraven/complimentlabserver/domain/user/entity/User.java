@@ -70,7 +70,6 @@ public class User {
     @Column(name = "refresh_token", length = 512)
     private String refreshToken;
 
-    // 필요 시 편의 메서드들…
 
     public User setRole(String role) {
         this.role = role;
