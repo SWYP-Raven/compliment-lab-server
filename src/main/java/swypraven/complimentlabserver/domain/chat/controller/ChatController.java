@@ -5,15 +5,14 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import swypraven.complimentlabserver.domain.chat.model.response.ChatResponseSlice;
 import swypraven.complimentlabserver.domain.chat.model.request.RequestMessage;
-import swypraven.complimentlabserver.domain.chat.model.response.ResponseMessage;
+import swypraven.complimentlabserver.domain.chat.model.response.ChatResponse;
+import swypraven.complimentlabserver.domain.chat.model.response.ChatResponseSlice;
 import swypraven.complimentlabserver.domain.chat.service.ChatService;
-import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
+import swypraven.complimentlabserver.global.auth.jwt.CustomUserPrincipal;
 import swypraven.complimentlabserver.global.response.ApiResponse;
 
 import java.time.LocalDateTime;
-
 
 @RestController
 @RequiredArgsConstructor
@@ -23,8 +22,11 @@ public class ChatController {
     private final ChatService chatService;
 
     @PostMapping("/{friendId}")
-    public ResponseEntity<ApiResponse<ResponseMessage>> sendMessage(@PathVariable Long friendId, @RequestBody RequestMessage requestMessage) {
-        ResponseMessage response = chatService.send(friendId, requestMessage);
+    public ResponseEntity<ApiResponse<ChatResponse>> sendMessage(
+            @PathVariable Long friendId,
+            @RequestBody RequestMessage requestMessage
+    ) {
+        ChatResponse response = chatService.send(friendId, requestMessage);
         return ResponseEntity.status(201).body(ApiResponse.success(response, "201", "성공"));
     }
 
@@ -32,8 +34,8 @@ public class ChatController {
     public ResponseEntity<ApiResponse<ChatResponseSlice>> getMessages(
             @PathVariable Long friendId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastCreatedAt,
-            @RequestParam(defaultValue = "20") int size)
-    {
+            @RequestParam(defaultValue = "20") int size
+    ) {
         ChatResponseSlice response = chatService.findAllByFriend(friendId, lastCreatedAt, size);
         return ResponseEntity.ok(ApiResponse.success(response, "200", "조회 성공"));
     }
@@ -41,19 +43,19 @@ public class ChatController {
     @PostMapping("/save/{messageId}")
     public ResponseEntity<?> saveMessage(
             @PathVariable("messageId") Long messageId,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal CustomUserPrincipal me
     ) {
-        chatService.saveMessage(userDetails, messageId);
+        chatService.saveMessage(me.id(), messageId);
         return ResponseEntity.ok(ApiResponse.success("200", "저장 성공"));
     }
 
     @GetMapping("/save")
     public ResponseEntity<?> getSavedMessages(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @AuthenticationPrincipal CustomUserPrincipal me,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastCreatedAt,
             @RequestParam(defaultValue = "20") int size
     ) {
-        ChatResponseSlice response = chatService.findAllSavedChat(userDetails, size, lastCreatedAt);
+        ChatResponseSlice response = chatService.findAllSavedChat(me.id(), size, lastCreatedAt);
         return ResponseEntity.ok(ApiResponse.success(response, "200", "조회 성공"));
     }
 }

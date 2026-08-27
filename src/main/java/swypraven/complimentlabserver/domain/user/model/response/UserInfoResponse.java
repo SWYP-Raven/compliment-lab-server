@@ -11,12 +11,12 @@ public class UserInfoResponse {
         this.id = user.getId();
         this.nickname = user.getNickname();
         this.email = user.getEmail();
+      
         this.friendAlarm = user.getFriendAlarm();
         this.archiveAlarm = user.getArchiveAlarm();
         this.marketingAlarm = user.getMarketingAlarm();
         this.eventAlarm = user.getEventAlarm();
     }
-
 
     private final Long id;
     private final String nickname;
@@ -25,5 +25,4 @@ public class UserInfoResponse {
     private final Boolean archiveAlarm;
     private final Boolean marketingAlarm;
     private final Boolean eventAlarm;
-
 }

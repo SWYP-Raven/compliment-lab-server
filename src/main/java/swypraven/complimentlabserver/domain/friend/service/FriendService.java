@@ -4,12 +4,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import swypraven.complimentlabserver.domain.compliment.entity.TypeCompliment;
 import swypraven.complimentlabserver.domain.chat.model.response.ChatResponse;
 import swypraven.complimentlabserver.domain.chat.service.ChatService;
+import swypraven.complimentlabserver.domain.compliment.entity.TypeCompliment;
 import swypraven.complimentlabserver.domain.compliment.service.ComplimentTypeService;
 import swypraven.complimentlabserver.domain.friend.entity.Friend;
 import swypraven.complimentlabserver.domain.friend.entity.UserFriendType;
+import swypraven.complimentlabserver.domain.friend.model.dto.LastMessageDto;
 import swypraven.complimentlabserver.domain.friend.model.request.RequestCreateFriend;
 import swypraven.complimentlabserver.domain.friend.model.request.RequestUpdateFriend;
 import swypraven.complimentlabserver.domain.friend.model.response.ResponseFriend;
@@ -30,18 +31,18 @@ import java.util.List;
 public class FriendService {
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
-    private final UserFriendTypeRepository  userFriendTypeRepository;
-
+    private final UserFriendTypeRepository userFriendTypeRepository;
     private final ComplimentTypeService complimentTypeService;
     private final ChatService chatService;
 
     @Transactional
-    public ResponseFriend create(Long userId, RequestCreateFriend request){
+    public ResponseFriend create(Long userId, RequestCreateFriend request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
-        TypeCompliment type = complimentTypeService.getType(request.getFriendType());
 
-        if(friendRepository.existsByUserAndType(user, type)) {
+        TypeCompliment type = complimentTypeService.getTypeById(Long.parseLong(request.getFriendType()));
+
+        if (friendRepository.existsByUserAndType(user, type)) {
             throw new FriendException(FriendErrorCode.EXIST_FRIEND);
         }
 
@@ -49,10 +50,10 @@ public class FriendService {
         Friend savedFriend = friendRepository.save(friend);
 
         boolean isFirst = !userFriendTypeRepository.existsByUserAndTypeCompliment(user, savedFriend.getType());
+        LastMessageDto lastMessageDto = chatService.createUser("안녕하세요. 반가워요!!", savedFriend);
 
-        return new ResponseFriend(savedFriend, isFirst);
+        return new ResponseFriend(savedFriend, isFirst, lastMessageDto);
     }
-
 
     @Transactional(readOnly = true)
     public List<ResponseFriend> getFriends(Long userId) {
@@ -62,18 +63,14 @@ public class FriendService {
 
         return friends.stream().map(friend -> {
             ChatResponse lastChat = chatService.findLastChats(friend);
-            return new ResponseFriend(friend, lastChat.getMessage());
+            return new ResponseFriend(friend, lastChat.getMessage(), lastChat.getTime());
         }).toList();
     }
-
 
     @Transactional
     public ResponseFriend updateFriend(Long friendId, Long userId, RequestUpdateFriend request) {
         Friend friend = friendRepository.findByIdAndUserId(friendId, userId)
                 .orElseThrow(() -> new FriendException(FriendErrorCode.NOT_FOUND_FRIEND));
-        if(!friend.getUser().getId().equals(userId)){
-            throw new FriendException(FriendErrorCode.FORBIDDEN_FRIEND);
-        }
 
         friend.changeName(request.getName());
 
@@ -85,17 +82,16 @@ public class FriendService {
         Friend friend = friendRepository.findByIdAndUserId(friendId, userId)
                 .orElseThrow(() -> new FriendException(FriendErrorCode.NOT_FOUND_FRIEND));
 
-        if (!friend.getUser().getId().equals(userId)) {
-            throw new FriendException(FriendErrorCode.FORBIDDEN_FRIEND);
+        if (!userFriendTypeRepository.existsByUserAndTypeCompliment(friend.getUser(), friend.getType())) {
+            userFriendTypeRepository.save(new UserFriendType(friend.getUser(), friend.getType()));
         }
 
-        userFriendTypeRepository.save(new UserFriendType(friend.getUser(), friend.getType()));
-        friendRepository.deleteById(friendId);
+        friendRepository.delete(friend);
     }
 
     @Transactional(readOnly = true)
     public Friend getFriend(Long friendId) {
-        return friendRepository.findById(friendId).orElseThrow(() -> new FriendException(FriendErrorCode.NOT_FOUND_FRIEND));
+        return friendRepository.findById(friendId)
+                .orElseThrow(() -> new FriendException(FriendErrorCode.NOT_FOUND_FRIEND));
     }
-
 }

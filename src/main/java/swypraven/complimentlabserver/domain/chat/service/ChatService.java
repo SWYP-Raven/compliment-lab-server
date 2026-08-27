@@ -8,37 +8,33 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import swypraven.complimentlabserver.domain.chat.api.ChatApi;
+import swypraven.complimentlabserver.domain.chat.entity.Chat;
 import swypraven.complimentlabserver.domain.chat.entity.ChatRole;
-import swypraven.complimentlabserver.domain.compliment.entity.ChatCompliment;
+import swypraven.complimentlabserver.domain.chat.model.request.RequestMessage;
 import swypraven.complimentlabserver.domain.chat.model.response.ChatResponse;
 import swypraven.complimentlabserver.domain.chat.model.response.ChatResponseSlice;
 import swypraven.complimentlabserver.domain.chat.model.response.ResponseNavarClovaChat;
-import swypraven.complimentlabserver.domain.chat.model.request.RequestMessage;
-import swypraven.complimentlabserver.domain.chat.model.response.ResponseMessage;
-import swypraven.complimentlabserver.domain.compliment.repository.ChatComplimentRepository;
-import swypraven.complimentlabserver.domain.chat.entity.Chat;
-import swypraven.complimentlabserver.domain.friend.entity.Friend;
 import swypraven.complimentlabserver.domain.chat.repository.ChatRepository;
+import swypraven.complimentlabserver.domain.compliment.entity.ChatCompliment;
+import swypraven.complimentlabserver.domain.compliment.repository.ChatComplimentRepository;
+import swypraven.complimentlabserver.domain.friend.entity.Friend;
+import swypraven.complimentlabserver.domain.friend.model.dto.LastMessageDto;
 import swypraven.complimentlabserver.domain.friend.repository.FriendRepository;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
-import swypraven.complimentlabserver.global.auth.security.CustomUserDetails;
 import swypraven.complimentlabserver.global.exception.chat.ChatErrorCode;
 import swypraven.complimentlabserver.global.exception.chat.ChatException;
 import swypraven.complimentlabserver.global.exception.friend.FriendErrorCode;
 import swypraven.complimentlabserver.global.exception.friend.FriendException;
-
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.time.ZoneId;
-import java.util.Collections;
-
 import swypraven.complimentlabserver.global.exception.user.UserErrorCode;
 import swypraven.complimentlabserver.global.exception.user.UserException;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -51,31 +47,29 @@ public class ChatService {
     private final FriendRepository friendRepository;
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
+    @Transactional
+    public LastMessageDto createUser(String message, Friend friend) {
+        Chat chat = chatRepository.save(new Chat(message, ChatRole.ASSISTANT, friend));
+        return new LastMessageDto(chat.getMessage(), chat.getCreatedAt());
+    }
 
     @Transactional
-    public ResponseMessage send(Long friendId, RequestMessage requestMessage) {
-        // 친구 정보
+    public ChatResponse send(Long friendId, RequestMessage requestMessage) {
         Friend friend = friendRepository.findById(friendId)
                 .orElseThrow(() -> new FriendException(FriendErrorCode.NOT_FOUND_FRIEND));
 
-        // 최근 20개 가져오기
         Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
         List<Chat> chatHistory = chatRepository.findLastChats(friend, pageable);
-
-        // 과거 → 최신 순서로 정렬 (AI가 맥락 이해 가능하게)
         Collections.reverse(chatHistory);
 
-        // AI 응답 생성
         ResponseNavarClovaChat chatResponse = chatApi.reply(friend, chatHistory, requestMessage);
 
-        // 메시지 저장
         Chat chat = new Chat(requestMessage.getMessage(), ChatRole.USER, friend);
         Chat responseChat = new Chat(chatResponse.getMessage(), ChatRole.ASSISTANT, friend);
 
         chatRepository.save(chat);
-        chatRepository.save(responseChat);
-
-        return new ResponseMessage(chatResponse.getMessage());
+        Chat savedChat = chatRepository.save(responseChat);
+        return new ChatResponse(savedChat);
     }
 
     @Transactional(readOnly = true)
@@ -83,24 +77,19 @@ public class ChatService {
         Friend friend = friendRepository.findById(friendId)
                 .orElseThrow(() -> new FriendException(FriendErrorCode.NOT_FOUND_FRIEND));
 
-        Pageable pageable = PageRequest.of(0, size); // 정렬은 JPQL에서 처리
+        Pageable pageable = PageRequest.of(0, size);
         Slice<Chat> chats = chatRepository.findNextChats(friend, lastCreatedAt, pageable);
 
         List<ChatResponse> chatResponses = new ArrayList<>(chats.getContent().stream()
                 .map(ChatResponse::new)
                 .toList());
 
-        // 최신 메시지가 아래로 가도록 역순으로 변환
-        Collections.reverse(chatResponses);
-
         return ChatResponseSlice.of(chatResponses, chats.hasNext());
     }
 
-
-
     @Transactional
-    public void saveMessage(CustomUserDetails userDetails, Long messageId) {
-        User user = userRepository.findById(userDetails.getId())
+    public void saveMessage(Long userId, Long messageId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
         Chat chat = chatRepository.findById(messageId)
@@ -110,24 +99,24 @@ public class ChatService {
             throw new ChatException(ChatErrorCode.INVALID_SAVE_ROLE_TYPE);
         }
 
-        // 카드 제목/본문/메타로 저장 (본문은 원문 대화 메시지를 기본값으로)
-        String title = null; // 필요시 클라이언트에서 받아도 됨
-        String content = chat.getMessage(); // 원문 대화 내용을 본문 기본값으로
-        Map<String, Object> meta = Map.of(); // 필요 없으면 빈 맵
+        ChatCompliment entity = ChatCompliment.of(
+                user,
+                chat,
+                chat.getMessage(),
+                chat.getRole().name(),
+                null,
+                null
+        );
 
-        ChatCompliment entity = ChatCompliment.of(user, chat, title, content, meta);
         chatComplimentRepository.save(entity);
     }
 
-
     @Transactional(readOnly = true)
-    public ChatResponseSlice findAllSavedChat(CustomUserDetails userDetails, int size, LocalDateTime lastCreatedAt) {
-        User user = userRepository.findById(userDetails.getId())
+    public ChatResponseSlice findAllSavedChat(Long userId, int size, LocalDateTime lastCreatedAt) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException(UserErrorCode.USER_NOT_FOUND));
 
         Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-
-        // LocalDateTime -> Instant(KST 기준) 변환 (null 허용)
         Instant cursor = (lastCreatedAt != null)
                 ? lastCreatedAt.atZone(KST).toInstant()
                 : null;
@@ -141,9 +130,11 @@ public class ChatService {
 
         return ChatResponseSlice.of(chatResponses, chats.hasNext());
     }
+
     @Transactional(readOnly = true)
     public ChatResponse findLastChats(Friend friend) {
-        Chat chat = chatRepository.findFirstByFriendOrderByCreatedAtDesc(friend).orElseGet(() -> new Chat("", ChatRole.USER, friend));
+        Chat chat = chatRepository.findFirstByFriendOrderByCreatedAtDesc(friend)
+                .orElseGet(() -> new Chat("", ChatRole.USER, friend));
         return new ChatResponse(chat);
     }
 }

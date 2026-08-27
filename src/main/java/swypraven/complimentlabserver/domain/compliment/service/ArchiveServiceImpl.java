@@ -2,26 +2,27 @@ package swypraven.complimentlabserver.domain.compliment.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import swypraven.complimentlabserver.domain.chat.entity.Chat;
+import swypraven.complimentlabserver.domain.chat.repository.ChatRepository;
 import swypraven.complimentlabserver.domain.compliment.entity.ChatCompliment;
 import swypraven.complimentlabserver.domain.compliment.entity.SavedTodayCompliment;
-import swypraven.complimentlabserver.domain.compliment.entity.TodayCompliment;
+import swypraven.complimentlabserver.domain.compliment.model.request.ArchiveRequests;
 import swypraven.complimentlabserver.domain.compliment.model.response.ArchiveDtos.ChatCardArchiveItem;
+import swypraven.complimentlabserver.domain.compliment.model.response.ArchiveDtos.ChatCardArchiveItemList;
 import swypraven.complimentlabserver.domain.compliment.model.response.ArchiveDtos.TodayArchiveItem;
 import swypraven.complimentlabserver.domain.compliment.repository.ChatComplimentRepository;
 import swypraven.complimentlabserver.domain.compliment.repository.SavedTodayComplimentRepository;
-import swypraven.complimentlabserver.domain.compliment.repository.TodayComplimentRepository;
-import swypraven.complimentlabserver.domain.chat.entity.Chat;
-import swypraven.complimentlabserver.domain.chat.repository.ChatRepository;
 import swypraven.complimentlabserver.domain.user.entity.User;
 import swypraven.complimentlabserver.domain.user.repository.UserRepository;
+import swypraven.complimentlabserver.global.exception.archive.ArchiveErrorCode;
+import swypraven.complimentlabserver.global.exception.archive.ArchiveException;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Map;
+import java.time.*;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -30,67 +31,136 @@ public class ArchiveServiceImpl implements ArchiveService {
 
     private final SavedTodayComplimentRepository savedTodayRepo;
     private final ChatComplimentRepository chatComplimentRepo;
-    private final TodayComplimentRepository todayRepo;
     private final ChatRepository chatRepo;
     private final UserRepository userRepo;
 
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
-    // ===== 오늘의 칭찬(텍스트) =====
-    @Override
     @Transactional
-    public TodayArchiveItem saveToday(Long userId, Long todayId) {
-        if (savedTodayRepo.existsByUserIdAndTodayComplimentId(userId, todayId)) {
-            throw new IllegalStateException("이미 저장된 오늘의 칭찬입니다.");
+    public TodayArchiveItem saveToday(
+            Long userId,
+            String text,
+            Long seed
+    ) {
+        if (text == null || text.isBlank()) {
+            throw new ArchiveException(ArchiveErrorCode.MESSAGE_EMPTY);
         }
 
         User user = userRepo.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        TodayCompliment today = todayRepo.findById(todayId)
-                .orElseThrow(() -> new IllegalArgumentException("TodayCompliment not found"));
+                .orElseThrow(() -> new ArchiveException(ArchiveErrorCode.USER_NOT_FOUND));
 
         SavedTodayCompliment saved = SavedTodayCompliment.builder()
                 .user(user)
-                .todayCompliment(today)
+                .text(text)
+                .seed(seed)
                 .build();
 
         saved = savedTodayRepo.save(saved);
         return mapToday(saved);
     }
 
-    // ArchiveServiceImpl.java (일부만)
     @Override
-    public Page<TodayArchiveItem> listToday(Long userId, Pageable pageable) {
-        return savedTodayRepo
-                .findByUserIdOrderByCreatedAtDesc(userId, pageable)
-                .map(this::mapToday);
+    @Transactional
+    public TodayArchiveItem saveTodayBySeed(Long userId, ArchiveRequests.SaveTodayBySeedRequest req) {
+        String text = req.getText();
+        if (text == null || text.isBlank()) {
+            throw new ArchiveException(ArchiveErrorCode.TEXT_EMPTY);
+        }
+
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new ArchiveException(ArchiveErrorCode.USER_NOT_FOUND));
+
+        SavedTodayCompliment saved = SavedTodayCompliment.builder()
+                .user(user)
+                .text(text)
+                .seed(req.getSeed())
+                .build();
+
+        saved = savedTodayRepo.save(saved);
+        return mapToday(saved);
     }
 
+    @Override
+    @Transactional
+    public ChatCardArchiveItem saveChatCardBySeed(Long userId, ArchiveRequests.SaveChatCardBySeedRequest req) {
+        if (req.getMessage() == null || req.getMessage().isBlank()) {
+            throw new ArchiveException(ArchiveErrorCode.MESSAGE_EMPTY);
+        }
+        if (req.getRole() == null || req.getRole().isBlank()) {
+            throw new ArchiveException(ArchiveErrorCode.ROLE_EMPTY);
+        }
+
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new ArchiveException(ArchiveErrorCode.USER_NOT_FOUND));
+        Chat chat = chatRepo.findById(req.getChatId())
+                .orElseThrow(() -> new ArchiveException(ArchiveErrorCode.CHAT_NOT_FOUND));
+
+        if (chat.getFriend() == null || chat.getFriend().getUser() == null
+                || !Objects.equals(chat.getFriend().getUser().getId(), userId)) {
+            throw new ArchiveException(ArchiveErrorCode.CHAT_NOT_FOUND_OR_FORBIDDEN);
+        }
+
+        ChatCompliment entity = ChatCompliment.builder()
+                .user(user)
+                .chat(chat)
+                .message(req.getMessage())
+                .role(req.getRole())
+                .seed(req.getSeed())
+                .metaJson(req.getMetaJson())
+                .build();
+
+        entity = chatComplimentRepo.save(entity);
+        return mapChatCard(entity);
+    }
+
+    @Override
+    public Page<TodayArchiveItem> listToday(Long userId, Pageable pageable) {
+        return savedTodayRepo.findByUserIdOrderByCreatedAtDesc(userId, pageable)
+                .map(this::mapToday);
+    }
 
     @Override
     @Transactional
     public void removeToday(Long userId, Long savedId) {
-        long deleted = savedTodayRepo.deleteByUserIdAndId(userId, savedId);
-        if (deleted == 0) {
-            throw new IllegalArgumentException("삭제할 항목이 없거나 권한이 없습니다.");
-        }
+        int deleted = savedTodayRepo.deleteByUserIdAndId(userId, savedId);
+        if (deleted == 0) throw new ArchiveException(ArchiveErrorCode.TODAY_NOT_FOUND_OR_FORBIDDEN);
     }
 
-    // ===== 대화 카드(텍스트 중심) =====
-    @Override
     @Transactional
-    public ChatCardArchiveItem saveChatCard(Long userId, Long chatId, String title, String content, Map<String, Object> meta) {
-        User user = userRepo.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        Chat chat = chatRepo.findById(chatId)
-                .orElseThrow(() -> new IllegalArgumentException("Chat not found"));
-
-        // (선택) 소유권 검사: 내 friend의 chat만 허용
-        if (!chat.getFriend().getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("You cannot archive someone else's chat.");
+    public ChatCardArchiveItem saveChatCard(
+            Long userId,
+            Long chatId,
+            String message,
+            String role,
+            Long seed,
+            String metaJson
+    ) {
+        if (message == null || message.isBlank()) {
+            throw new ArchiveException(ArchiveErrorCode.MESSAGE_EMPTY);
+        }
+        if (role == null || role.isBlank()) {
+            throw new ArchiveException(ArchiveErrorCode.ROLE_EMPTY);
         }
 
-        ChatCompliment entity = ChatCompliment.of(user, chat, title, content, meta);
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new ArchiveException(ArchiveErrorCode.USER_NOT_FOUND));
+        Chat chat = chatRepo.findById(chatId)
+                .orElseThrow(() -> new ArchiveException(ArchiveErrorCode.CHAT_NOT_FOUND));
+
+        if (chat.getFriend() == null || chat.getFriend().getUser() == null
+                || !Objects.equals(chat.getFriend().getUser().getId(), userId)) {
+            throw new ArchiveException(ArchiveErrorCode.CHAT_NOT_FOUND_OR_FORBIDDEN);
+        }
+
+        ChatCompliment entity = ChatCompliment.builder()
+                .user(user)
+                .chat(chat)
+                .message(message)
+                .role(role)
+                .seed(seed)
+                .metaJson(metaJson)
+                .build();
+
         entity = chatComplimentRepo.save(entity);
         return mapChatCard(entity);
     }
@@ -108,38 +178,44 @@ public class ArchiveServiceImpl implements ArchiveService {
     @Override
     @Transactional
     public void removeChatCard(Long userId, Long cardId) {
-        long deleted = chatComplimentRepo.deleteByUserIdAndId(userId, cardId);
-        if (deleted == 0) {
-            throw new IllegalArgumentException("삭제할 카드가 없거나 권한이 없습니다.");
-        }
+        int deleted = chatComplimentRepo.deleteByUserIdAndId(userId, cardId);
+        if (deleted == 0) throw new ArchiveException(ArchiveErrorCode.CARD_NOT_FOUND_OR_FORBIDDEN);
     }
 
-    // ===== 유저별 과거~오늘 조회(미래 제외, 오늘 포함) =====
     @Override
-    public Page<TodayArchiveItem> listTodayByUser(Long targetUserId, LocalDate from, LocalDate toOrToday, Pageable pageable) {
-        LocalDate upper = (toOrToday != null) ? toOrToday : LocalDate.now(KST); // 오늘 포함
-        Instant startInclusive = (from != null) ? from.atStartOfDay(KST).toInstant() : Instant.EPOCH;
-        Instant endInclusive = upper.plusDays(1).atStartOfDay(KST).toInstant().minusMillis(1);
+    public Page<TodayArchiveItem> listTodayByUser(
+            Long targetUserId, LocalDate from, LocalDate toOrToday, Pageable pageable
+    ) {
+        LocalDate upper = (toOrToday != null) ? toOrToday : LocalDate.now(KST);
+        Instant fromStart = (from != null) ? from.atStartOfDay(KST).toInstant() : null;
+        Instant toEndExclusive = upper.plusDays(1).atStartOfDay(KST).toInstant();
 
-        // Repository 쿼리는 아래 시그니처 중 하나가 필요합니다.
-        // 1) 메서드 이름 기반:
-        // Page<SavedTodayCompliment> findByUserIdAndCreatedAtBetweenOrderByCreatedAtDesc(Long userId, Instant start, Instant end, Pageable p);
-        //
-        // 2) 또는 @Query 기반 findHistory(userId, start, end, pageable)
-
-        return savedTodayRepo
-                .findByUserIdAndCreatedAtBetweenOrderByCreatedAtDesc(targetUserId, startInclusive, endInclusive, pageable)
+        return savedTodayRepo.findHistory(targetUserId, fromStart, toEndExclusive, pageable)
                 .map(this::mapToday);
     }
 
-    // ===== mappers =====
+    @Override
+    @Transactional(readOnly = true)
+    public ChatCardArchiveItemList getArchivedByMonth(Long userId, YearMonth yearMonth, int page, int size) {
+        ZoneId zone = ZoneId.systemDefault();
+
+        Instant start = yearMonth.atDay(1).atStartOfDay(zone).toInstant();
+        Instant end = yearMonth.atEndOfMonth().atTime(LocalTime.MAX).atZone(zone).toInstant();
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<ChatCompliment> chatComplimentPage =
+                chatComplimentRepo.findByUserIdAndCreatedAtBetween(userId, start, end, pageable);
+
+        return new ChatCardArchiveItemList(chatComplimentPage.stream().map(this::mapChatCard).toList());
+    }
+
     private TodayArchiveItem mapToday(SavedTodayCompliment e) {
         return TodayArchiveItem.builder()
                 .id(e.getId())
-                .todayId(e.getTodayCompliment().getId())
-                .typeId(e.getTodayCompliment().getType().getId())
-                .message(e.getTodayCompliment().getMessage())
-                .createdAt(e.getCreatedAt())
+                .text(e.getText())
+                .seed(e.getSeed())
+                .createdAt(LocalDateTime.ofInstant(e.getCreatedAt(), KST))
                 .build();
     }
 
@@ -147,11 +223,11 @@ public class ArchiveServiceImpl implements ArchiveService {
         return ChatCardArchiveItem.builder()
                 .id(e.getId())
                 .chatId(e.getChat().getId())
-                .title(e.getTitle())
-                .content(e.getContent())
-                .meta(e.getMeta())
-                .chatMessage(e.getChat().getMessage())
-                .createdAt(e.getCreatedAt())
+                .message(e.getMessage())
+                .role(e.getRole())
+                .metaJson(e.getMetaJson())
+                .typeId(e.getChat().getFriend().getType().getId().toString())
+                .createdAt(LocalDateTime.ofInstant(e.getCreatedAt(), KST))
                 .build();
     }
 }

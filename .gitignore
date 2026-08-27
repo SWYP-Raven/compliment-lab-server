@@ -41,3 +41,5 @@ out/
 /src/main/resources/application.yml
 /src/main/resources/application-prod.yaml
 /src/test/resources/application-test.yaml
+/src/main/resources/application-release.yaml
+/src/main/resources/application.yaml

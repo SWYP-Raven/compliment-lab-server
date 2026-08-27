@@ -2,13 +2,10 @@ package swypraven.complimentlabserver.domain.compliment.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import swypraven.complimentlabserver.domain.chat.entity.Chat;
 import swypraven.complimentlabserver.domain.user.entity.User;
 
-import java.time.LocalDateTime;
-import java.util.Map;
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -31,44 +28,49 @@ public class ChatCompliment {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    /** 카드가 만들어진 원본 대화 */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "chat_id")
+    @JoinColumn(name = "chat_id", nullable = false)
     private Chat chat;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    /** 카드 제목(선택) */
-    @Column(name = "title", length = 200)
-    private String title;
+    @Column(name = "message", nullable = false, columnDefinition = "text")
+    private String message;
 
-    /** 카드 본문 텍스트(필수) */
-    @Column(name = "content", nullable = false, columnDefinition = "text")
-    private String content;
+    @Column(name = "role", length = 20, nullable = false)
+    private String role;
 
-    /** 렌더링 옵션(폰트/컬러/정렬 등) */
-    @JdbcTypeCode(SqlTypes.JSON) // Hibernate 6 + MySQL 8 JSON 컬럼
+    @Column(name = "seed")
+    private Long seed;
+
     @Column(name = "meta_json", columnDefinition = "json")
-    private Map<String, Object> meta;
+    private String metaJson;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @PrePersist
     void prePersist() {
-        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (createdAt == null) createdAt = Instant.now();
     }
 
-    /** 팩토리 메서드 (텍스트 중심) */
-    public static ChatCompliment of(User user, Chat chat, String title, String content, Map<String, Object> meta) {
+    public static ChatCompliment of(
+            User user,
+            Chat chat,
+            String message,
+            String role,
+            Long seed,
+            String metaJson
+    ) {
         return ChatCompliment.builder()
                 .user(user)
                 .chat(chat)
-                .title(title)
-                .content(content)
-                .meta(meta)
+                .message(message)
+                .role(role)
+                .seed(seed)
+                .metaJson(metaJson)
                 .build();
     }
 }

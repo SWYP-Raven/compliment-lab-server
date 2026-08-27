@@ -2,8 +2,12 @@ package swypraven.complimentlabserver.domain.friend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import swypraven.complimentlabserver.domain.chat.entity.Chat;
 import swypraven.complimentlabserver.domain.compliment.entity.TypeCompliment;
 import swypraven.complimentlabserver.domain.user.entity.User;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Entity
@@ -26,6 +30,9 @@ public class Friend {
 
     @Column(name = "name")
     private String name;
+
+    @OneToMany(mappedBy = "friend", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Chat> chats = new ArrayList<>();
 
     @Builder
     public Friend(User user, TypeCompliment type, String name) {
